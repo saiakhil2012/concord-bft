@@ -56,6 +56,7 @@ TestsBuilder::~TestsBuilder() {
 BlockId TestsBuilder::getInitialLastBlockId() {
   auto *request = SimpleGetLastBlockRequest::alloc();
   request->header.type = GET_LAST_BLOCK;
+  request->header.executionEngineId = 0;
 
   size_t expectedReplySize = sizeof(SimpleReply_GetLastBlock);
   std::vector<char> reply(expectedReplySize);
@@ -86,6 +87,7 @@ void TestsBuilder::retrieveExistingBlocksFromKVB() {
   // KVB is not empty. Read existing blocks and save in the memory.
   auto *request = SimpleReadRequest::alloc(NUMBER_OF_KEYS);
   request->header.type = READ;
+  request->header.executionEngineId = 0;
   request->readVersion = prevLastBlockId_;
   request->numberOfKeysToRead = NUMBER_OF_KEYS;
   SimpleKey *requestKeys = request->keys;
@@ -206,6 +208,7 @@ void TestsBuilder::createAndInsertRandomConditionalWrite() {
 
   auto *request = SimpleCondWriteRequest::alloc(numOfKeysInReadSet, numOfWrites);
   request->header.type = COND_WRITE;
+  request->header.executionEngineId = 0;
   request->readVersion = readVersion;
   request->numOfKeysInReadSet = numOfKeysInReadSet;
   request->numOfWrites = numOfWrites;
@@ -258,6 +261,7 @@ void TestsBuilder::createAndInsertRandomRead() {
   size_t numberOfKeysToRead = (rand() % (MAX_READS_IN_REQ - 1)) + 1;
   auto *request = SimpleReadRequest::alloc(numberOfKeysToRead);
   request->header.type = READ;
+  request->header.executionEngineId = 0;
   request->readVersion = readVersion;
   request->numberOfKeysToRead = numberOfKeysToRead;
 
@@ -300,6 +304,7 @@ void TestsBuilder::createAndInsertGetLastBlock() {
   // Create request
   auto *request = SimpleGetLastBlockRequest::alloc();
   request->header.type = GET_LAST_BLOCK;
+  request->header.executionEngineId = 0;
 
   // Add request to m_requests
   requests_.push_back((SimpleRequest *)request);

@@ -141,9 +141,9 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
   auto *writeReq = (SimpleCondWriteRequest *)request;
   LOG_INFO(m_logger,
            "Execute WRITE command:"
-               << " type=" << writeReq->header.type << " seqNum=" << sequenceNum
-               << " numOfWrites=" << writeReq->numOfWrites << " numOfKeysInReadSet=" << writeReq->numOfKeysInReadSet
-               << " readVersion=" << writeReq->readVersion
+               << ", executionEngineId=" << (int)writeReq->header.executionEngineId << " type=" << writeReq->header.type
+               << " seqNum=" << sequenceNum << " numOfWrites=" << writeReq->numOfWrites
+               << " numOfKeysInReadSet=" << writeReq->numOfKeysInReadSet << " readVersion=" << writeReq->readVersion
                << " READ_ONLY_FLAG=" << ((flags & MsgFlag::READ_ONLY_FLAG) != 0 ? "true" : "false")
                << " PRE_PROCESS_FLAG=" << ((flags & MsgFlag::PRE_PROCESS_FLAG) != 0 ? "true" : "false")
                << " HAS_PRE_PROCESSED_FLAG=" << ((flags & MsgFlag::HAS_PRE_PROCESSED_FLAG) != 0 ? "true" : "false"));
@@ -264,7 +264,8 @@ bool InternalCommandsHandler::executeReadCommand(
   auto *readReq = (SimpleReadRequest *)request;
   LOG_INFO(m_logger,
            "Execute READ command: type=" << readReq->header.type << ", numberOfKeysToRead="
-                                         << readReq->numberOfKeysToRead << ", readVersion=" << readReq->readVersion);
+                                         << readReq->numberOfKeysToRead << ", readVersion=" << readReq->readVersion
+                                         << ", executionEngineId=" << (int)readReq->header.executionEngineId);
 
   auto minRequestSize = std::max(sizeof(SimpleReadRequest), readReq->getSize());
   if (requestSize < minRequestSize) {

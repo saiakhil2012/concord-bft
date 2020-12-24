@@ -199,7 +199,7 @@ std::unique_ptr<TestSetup> TestSetup::ParseArgs(int argc, char** argv) {
                                                     logPropsFile});
 
   } catch (const std::exception& e) {
-    LOG_FATAL(GL, "failed to parse command line arguments: " << e.what());
+    LOG_FATAL(GL, "Failed to Setup Replica: " << e.what());
     throw;
   }
 }

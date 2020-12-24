@@ -66,8 +66,11 @@ enum RequestType : char {
   ADD_REMOVE_NODE = 7
 };
 
+using ExecutionEngineId = uint8_t;
+
 struct SimpleRequest {
   RequestType type = {NONE};
+  ExecutionEngineId executionEngineId = 0;
 };
 
 struct SimpleGetLastBlockRequest {
