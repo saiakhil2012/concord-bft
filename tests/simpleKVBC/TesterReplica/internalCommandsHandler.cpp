@@ -17,11 +17,13 @@
 #include "sliver.hpp"
 #include "kv_types.hpp"
 #include "block_metadata.hpp"
+#include "httplib.h"
 #include <unistd.h>
 #include <algorithm>
 
 using namespace BasicRandomTests;
 using namespace bftEngine;
+using namespace httplib;
 
 using concordUtils::Status;
 using concordUtils::Sliver;
@@ -147,6 +149,9 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
                << " READ_ONLY_FLAG=" << ((flags & MsgFlag::READ_ONLY_FLAG) != 0 ? "true" : "false")
                << " PRE_PROCESS_FLAG=" << ((flags & MsgFlag::PRE_PROCESS_FLAG) != 0 ? "true" : "false")
                << " HAS_PRE_PROCESSED_FLAG=" << ((flags & MsgFlag::HAS_PRE_PROCESSED_FLAG) != 0 ? "true" : "false"));
+
+  Client cli("http://172.17.0.1:8080");
+  auto res = cli.Get("/test");
 
   if (writeReq->header.type == WEDGE) {
     LOG_INFO(m_logger, "A wedge command has been called" << KVLOG(sequenceNum));
