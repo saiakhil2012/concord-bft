@@ -152,6 +152,8 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
 
   Client cli("http://172.17.0.1:8080");
   auto res = cli.Get("/test");
+  LOG_INFO(m_logger, "Status is " << res->status);
+  LOG_INFO(m_logger, "Body is " << res->body);
 
   if (writeReq->header.type == WEDGE) {
     LOG_INFO(m_logger, "A wedge command has been called" << KVLOG(sequenceNum));
