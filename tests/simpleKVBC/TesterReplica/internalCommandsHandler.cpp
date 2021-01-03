@@ -150,7 +150,8 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
                << " PRE_PROCESS_FLAG=" << ((flags & MsgFlag::PRE_PROCESS_FLAG) != 0 ? "true" : "false")
                << " HAS_PRE_PROCESSED_FLAG=" << ((flags & MsgFlag::HAS_PRE_PROCESSED_FLAG) != 0 ? "true" : "false"));
 
-  Client cli("http://172.17.0.1:8080");
+  LOG_INFO(m_logger, "Caling a GET on Execution Engine");
+  Client cli("172.17.0.1", 8080);
   auto res = cli.Get("/test");
   LOG_INFO(m_logger, "Status is " << res->status);
   LOG_INFO(m_logger, "Body is " << res->body);
