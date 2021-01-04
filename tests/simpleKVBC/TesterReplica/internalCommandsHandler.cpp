@@ -34,7 +34,7 @@ using concord::kvbc::BlockId;
 using concord::kvbc::KeyValuePair;
 using concord::storage::SetOfKeyValuePairs;
 
-const uint64_t LONG_EXEC_CMD_TIME_IN_SEC = 11;
+//const uint64_t LONG_EXEC_CMD_TIME_IN_SEC = 11;
 
 int InternalCommandsHandler::execute(uint16_t clientId,
                                      uint64_t sequenceNum,
@@ -153,16 +153,16 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
                << " PRE_PROCESS_FLAG=" << ((flags & MsgFlag::PRE_PROCESS_FLAG) != 0 ? "true" : "false")
                << " HAS_PRE_PROCESSED_FLAG=" << ((flags & MsgFlag::HAS_PRE_PROCESSED_FLAG) != 0 ? "true" : "false"));
 
-  LOG_INFO(m_logger, "Caling a GET on Execution Engine");
   Client cli("172.17.0.1", 8080);
 
+  /*LOG_INFO(m_logger, "Caling a GET on Execution Engine");
   auto res = cli.Get("/test");
-  LOG_INFO(m_logger, "Test Status is " << res->status);
-  LOG_INFO(m_logger, "Test Body is " << res->body);
+  LOG_INFO(m_logger, "Status is " << res->status);
+  LOG_INFO(m_logger, "Body is " << res->body);*/
 
-  std::cout << "Key: " << std::string(writeReq->keyValueArray()->simpleKey.key);
-  std::string k1(writeReq->keyValueArray()->simpleKey.key);
-  std::string v1(writeReq->keyValueArray()->simpleValue.value);
+  std::cout << "Key: " << std::string(writeReq->keyValueArray()->simpleKey.key) << std::endl;
+  std::string k1(reinterpret_cast<char*>(writeReq->keyValueArray()->simpleKey.key), KV_LEN);
+  std::string v1(reinterpret_cast<char*>(writeReq->keyValueArray()->simpleValue.value), KV_LEN);
 
   LOG_INFO(m_logger, "Key is " << k1);
   /*for (size_t i = 0; i < k1.size(); ++i)
@@ -190,8 +190,10 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
   LOG_INFO(m_logger, "Status is " << res1->status);
   LOG_INFO(m_logger, "Body is " << res1->body);
 
+  ++m_writesCounter;
+  return true;
 
-  if (writeReq->header.type == WEDGE) {
+  /*if (writeReq->header.type == WEDGE) {
     LOG_INFO(m_logger, "A wedge command has been called" << KVLOG(sequenceNum));
     controlStateManager_->setStopAtNextCheckpoint(sequenceNum);
   }
@@ -251,7 +253,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
   LOG_INFO(
       m_logger,
       "ConditionalWrite message handled; writesCounter=" << m_writesCounter << " currBlock=" << reply->latestBlock);
-  return true;
+  return true;*/
 }
 
 bool InternalCommandsHandler::executeGetBlockDataCommand(
@@ -336,6 +338,28 @@ bool InternalCommandsHandler::executeReadCommand(
     memcpy(replyItems->simpleKey.key, readKeys->key, KV_LEN);
     Sliver value;
     BlockId outBlock = 0;
+    
+    Client cli("172.17.0.1", 8080);
+    std::cout << "Entire Key to Read is follows: " << std::endl;
+    for (int i = 0; i < KV_LEN; i++) {
+      std::cout << replyItems->simpleKey.key[i];
+    }
+    std::cout << std::endl;
+    std::string k1(readKeys->key);
+    LOG_INFO(m_logger, "Key is " << k1);
+
+    json body;
+    body["command"] = "get";
+    body["key"] = k1;
+
+    std::stringstream buffer;
+    buffer << body << std::endl;
+    //LOG_INFO(m_logger, "JSON object is " << buffer.str());
+
+    auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
+    //LOG_INFO(m_logger, "Status is " << res1->status);
+    //LOG_INFO(m_logger, "Body is " << res1->body);
+    
     if (!m_storage->get(readReq->readVersion, buildSliverFromStaticBuf(readKeys->key), value, outBlock).isOK()) {
       LOG_ERROR(m_logger, "Read: Failed to get keys for readVersion = %" << readReq->readVersion);
       return false;
