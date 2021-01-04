@@ -18,12 +18,15 @@
 #include "kv_types.hpp"
 #include "block_metadata.hpp"
 #include "httplib.h"
+#include <jsoncons/json.hpp>
 #include <unistd.h>
 #include <algorithm>
 
 using namespace BasicRandomTests;
 using namespace bftEngine;
 using namespace httplib;
+using namespace std;
+using namespace jsoncons;
 
 using concordUtils::Status;
 using concordUtils::Sliver;
@@ -155,6 +158,41 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
   auto res = cli.Get("/test");
   LOG_INFO(m_logger, "Status is " << res->status);
   LOG_INFO(m_logger, "Body is " << res->body);
+
+  std::cout << "Key: " << std::string(writeReq->keyValueArray()->simpleKey.key);
+  std::string k1(writeReq->keyValueArray()->simpleKey.key);
+  std::string v1(writeReq->keyValueArray()->simpleValue.value);
+
+  LOG_INFO(m_logger, "Key is " << k1);
+
+  for (size_t i = 0; i < k1.size(); ++i)
+  {
+    std::cout << i << " " << std::hex << static_cast<int>(static_cast<uint8_t>(k1.at(i))) << std::endl;
+  }
+
+  LOG_INFO(m_logger, "Value is " << v1);
+
+  for (size_t i = 0; i < v1.size(); ++i)
+  {
+    std::cout << i << " " << std::hex << static_cast<int>(static_cast<uint8_t>(v1.at(i))) << std::endl;
+  }
+
+  json body;
+  body["command"] = "add";
+  body["key"] = k1;
+  body["value"] = v1;
+
+  std::stringstream buffer;
+  buffer << body << std::endl;
+
+  //LOG_INFO(m_logger, "JSON object is " << body.dump());
+  LOG_INFO(m_logger, "JSON object is " << buffer.str());
+  //LOG_INFO(m_logger, "JSON object is " << json::parse(body));
+
+  auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
+  LOG_INFO(m_logger, "Status is " << res1->status);
+  LOG_INFO(m_logger, "Body is " << res1->body);
+
 
   if (writeReq->header.type == WEDGE) {
     LOG_INFO(m_logger, "A wedge command has been called" << KVLOG(sequenceNum));
