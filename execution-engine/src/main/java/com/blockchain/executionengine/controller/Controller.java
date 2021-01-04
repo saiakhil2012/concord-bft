@@ -33,7 +33,7 @@ class Controller {
 
     Gson g = new Gson();
     RestTemplate restTemplate = new RestTemplate();
-    String dbUrl = "http://localhost:9090/db";
+    String dbUrl = "http://172.17.0.1:9090/db";
 
     String seed = "TestSeedCanBeGeneratedAndStoredPerUser";
 
@@ -54,6 +54,7 @@ class Controller {
     @PostMapping("/ee/execute")
     String newKeyValue(@RequestBody String request) {
         log.info("Post and now calling db");
+        log.info("Request is " + request);
         try {
             Command command = new Command();
             JSONObject reqObject = new JSONObject(request);
