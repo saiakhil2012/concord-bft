@@ -345,6 +345,7 @@ class TestsBuilder {
 
  private:
   void create(size_t numOfRequests, size_t seed);
+  std::string genRandomString(int n);
   void createAndInsertRandomConditionalWrite();
   void createAndInsertRandomRead();
   void createAndInsertGetLastBlock();
