@@ -46,7 +46,7 @@ class InternalCommandsHandler : public concord::kvbc::ICommandsHandler {
                           concord::kvbc::IBlockMetadata *blockMetadata,
                           logging::Logger &logger)
       : m_storage(storage),
-        //m_blocksAppender(blocksAppender),
+        m_blocksAppender(blocksAppender),
         m_blockMetadata(blockMetadata),
         m_logger(logger),
         controlHandlers_(std::make_shared<InternalControlHandlers>()) {}
@@ -112,7 +112,7 @@ class InternalCommandsHandler : public concord::kvbc::ICommandsHandler {
 
  private:
   concord::kvbc::ILocalKeyValueStorageReadOnly *m_storage;
-  //concord::kvbc::IBlocksAppender *m_blocksAppender;
+  concord::kvbc::IBlocksAppender *m_blocksAppender;
   concord::kvbc::IBlockMetadata *m_blockMetadata;
   logging::Logger &m_logger;
   size_t m_readsCounter = 0;
