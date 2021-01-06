@@ -160,17 +160,17 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
   LOG_INFO(m_logger, "Test Status is " << res->status);
   LOG_INFO(m_logger, "Test Body is " << res->body);
 
-  std::cout << "Key: " << std::string(writeReq->keyValueArray()->simpleKey.key);
+  std::cout << "(WRITE) Key: " << std::string(writeReq->keyValueArray()->simpleKey.key);
   std::string k1(writeReq->keyValueArray()->simpleKey.key);
   std::string v1(writeReq->keyValueArray()->simpleValue.value);
 
-  LOG_INFO(m_logger, "Key is " << k1);
+  LOG_INFO(m_logger, "(WRITE) Key is " << k1);
   /*for (size_t i = 0; i < k1.size(); ++i)
   {
     std::cout << i << " " << std::hex << static_cast<int>(static_cast<uint8_t>(k1.at(i))) << std::endl;
   }*/
 
-  LOG_INFO(m_logger, "Value is " << v1);
+  LOG_INFO(m_logger, "(WRITE) Value is " << v1);
   /*for (size_t i = 0; i < v1.size(); ++i)
   {
     std::cout << i << " " << std::hex << static_cast<int>(static_cast<uint8_t>(v1.at(i))) << std::endl;
@@ -184,11 +184,11 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
   std::stringstream buffer;
   buffer << body << std::endl;
 
-  LOG_INFO(m_logger, "JSON object is " << buffer.str());
+  LOG_INFO(m_logger, "(WRITE) JSON object is " << buffer.str());
 
   auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
-  LOG_INFO(m_logger, "Status is " << res1->status);
-  LOG_INFO(m_logger, "Body is " << res1->body);
+  LOG_INFO(m_logger, "(WRITE) Status is " << res1->status);
+  LOG_INFO(m_logger, "(WRITE) Body is " << res1->body);
 
 
   if (writeReq->header.type == WEDGE) {
@@ -330,10 +330,29 @@ bool InternalCommandsHandler::executeReadCommand(
   reply->header.type = READ;
   reply->numOfItems = numOfItems;
 
+  //LOG_INFO(m_logger, "Caling a GET on Execution Engine");
+  //Client cli("172.17.0.1", 8080);
+
   SimpleKey *readKeys = readReq->keys;
   SimpleKV *replyItems = reply->items;
   for (size_t i = 0; i < numOfItems; i++) {
     memcpy(replyItems->simpleKey.key, readKeys->key, KV_LEN);
+    /*LOG_INFO(m_logger, "(READ) i num Read Item is: " << i);
+    std::cout << "(READ) Key: " << std::string(replyItems->simpleKey.key);
+    std::string k1(replyItems->simpleKey.key);
+
+    LOG_INFO(m_logger, "(READ) Key is " << k1);
+
+    json body;
+    body["command"] = "get";
+    body["key"] = k1;
+
+    std::stringstream buffer;
+    buffer << body << std::endl;
+    auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
+    LOG_INFO(m_logger, "(READ) Status is " << res1->status);
+    LOG_INFO(m_logger, "(READ) Body is " << res1->body);*/
+
     Sliver value;
     BlockId outBlock = 0;
     if (!m_storage->get(readReq->readVersion, buildSliverFromStaticBuf(readKeys->key), value, outBlock).isOK()) {
