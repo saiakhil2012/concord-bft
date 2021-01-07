@@ -330,16 +330,17 @@ bool InternalCommandsHandler::executeReadCommand(
   reply->header.type = READ;
   reply->numOfItems = numOfItems;
 
-  //LOG_INFO(m_logger, "Caling a GET on Execution Engine");
-  //Client cli("172.17.0.1", 8080);
+  LOG_INFO(m_logger, "Caling a GET on Execution Engine");
+  Client cli("172.17.0.1", 8080);
 
   SimpleKey *readKeys = readReq->keys;
   SimpleKV *replyItems = reply->items;
   for (size_t i = 0; i < numOfItems; i++) {
-    memcpy(replyItems->simpleKey.key, readKeys->key, KV_LEN);
-    /*LOG_INFO(m_logger, "(READ) i num Read Item is: " << i);
-    std::cout << "(READ) Key: " << std::string(replyItems->simpleKey.key);
-    std::string k1(replyItems->simpleKey.key);
+    memcpy(replyItems[i].simpleKey.key, readKeys[i].key, KV_LEN);
+    
+    LOG_INFO(m_logger, "(READ) i num Read Item is: " << i);
+    std::cout << "(READ) Key: " << std::string(replyItems[i].simpleKey.key, KV_LEN);
+    std::string k1(replyItems[i].simpleKey.key, KV_LEN);
 
     LOG_INFO(m_logger, "(READ) Key is " << k1);
 
@@ -351,21 +352,23 @@ bool InternalCommandsHandler::executeReadCommand(
     buffer << body << std::endl;
     auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
     LOG_INFO(m_logger, "(READ) Status is " << res1->status);
-    LOG_INFO(m_logger, "(READ) Body is " << res1->body);*/
+    LOG_INFO(m_logger, "(READ) Body is " << res1->body);
 
-    Sliver value;
+    /*Sliver value;
     BlockId outBlock = 0;
-    if (!m_storage->get(readReq->readVersion, buildSliverFromStaticBuf(readKeys->key), value, outBlock).isOK()) {
+    if (!m_storage->get(readReq->readVersion, buildSliverFromStaticBuf(readKeys[i].key), value, outBlock).isOK()) {
       LOG_ERROR(m_logger, "Read: Failed to get keys for readVersion = %" << readReq->readVersion);
       return false;
-    }
+    }*/
 
-    if (value.length() > 0)
-      memcpy(replyItems->simpleValue.value, value.data(), KV_LEN);
-    else
+    if (res1->body.length() > 0) {
+      //memcpy(replyItems->simpleValue.value, res1->body, KV_LEN);
+      strcpy(replyItems->simpleValue.value, res1->body.c_str());
+    } else {
       memset(replyItems->simpleValue.value, 0, KV_LEN);
-    ++readKeys;
-    ++replyItems;
+    }
+    //++readKeys;
+    //++replyItems;
   }
   ++m_readsCounter;
   LOG_INFO(m_logger, "READ message handled; readsCounter=" << m_readsCounter);
