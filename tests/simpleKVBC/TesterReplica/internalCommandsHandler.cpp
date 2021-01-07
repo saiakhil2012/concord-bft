@@ -339,8 +339,9 @@ bool InternalCommandsHandler::executeReadCommand(
     memcpy(replyItems[i].simpleKey.key, readKeys[i].key, KV_LEN);
     
     LOG_INFO(m_logger, "(READ) i num Read Item is: " << i);
-    std::cout << "(READ) Key: " << std::string(replyItems[i].simpleKey.key, KV_LEN);
+    std::cout << "(READ) Key: " << std::string(replyItems[i].simpleKey.key, KV_LEN) << std::endl;
     std::string k1(replyItems[i].simpleKey.key, KV_LEN);
+    std::cout << "(READ) Size of Key: " << k1.length() << std::endl;
 
     LOG_INFO(m_logger, "(READ) Key is " << k1);
 
@@ -352,6 +353,7 @@ bool InternalCommandsHandler::executeReadCommand(
     buffer << body << std::endl;
     auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
     LOG_INFO(m_logger, "(READ) Status is " << res1->status);
+    LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
     LOG_INFO(m_logger, "(READ) Body is " << res1->body);
 
     /*Sliver value;
@@ -363,9 +365,9 @@ bool InternalCommandsHandler::executeReadCommand(
 
     if (res1->body.length() > 0) {
       //memcpy(replyItems->simpleValue.value, res1->body, KV_LEN);
-      strcpy(replyItems->simpleValue.value, res1->body.c_str());
+      strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
     } else {
-      memset(replyItems->simpleValue.value, 0, KV_LEN);
+      memset(replyItems[i].simpleValue.value, 0, KV_LEN);
     }
     //++readKeys;
     //++replyItems;
