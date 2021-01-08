@@ -347,6 +347,7 @@ class TestsBuilder {
   void create(size_t numOfRequests, size_t seed);
   std::string genRandomString(int n);
   void createAndInsertRandomConditionalWrite();
+  void createAndInsertReadPreviouslyWrittenKey();
   void createAndInsertRandomRead();
   void createAndInsertGetLastBlock();
   void addExpectedWriteReply(bool foundConflict);
@@ -361,6 +362,7 @@ class TestsBuilder {
   RequestsList requests_;
   RepliesList replies_;
   std::map<concord::kvbc::BlockId, SimpleBlock*> internalBlockchain_;
+  std::map<std::string, std::string> writtenKeyValueMap;
   KeyBlockIdToValueMap allKeysToValueMap_;
   concord::kvbc::BlockId prevLastBlockId_ = 0;
   concord::kvbc::BlockId lastBlockId_ = 0;
