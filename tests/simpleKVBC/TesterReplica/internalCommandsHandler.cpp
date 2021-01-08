@@ -156,25 +156,16 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
   LOG_INFO(m_logger, "Caling a GET on Execution Engine");
   Client cli("172.17.0.1", 8080);
 
-  auto res = cli.Get("/test");
+  /*auto res = cli.Get("/test");
   LOG_INFO(m_logger, "Test Status is " << res->status);
-  LOG_INFO(m_logger, "Test Body is " << res->body);
+  LOG_INFO(m_logger, "Test Body is " << res->body);*/
 
   std::cout << "(WRITE) Key: " << std::string(writeReq->keyValueArray()->simpleKey.key);
   std::string k1(writeReq->keyValueArray()->simpleKey.key);
   std::string v1(writeReq->keyValueArray()->simpleValue.value);
 
   LOG_INFO(m_logger, "(WRITE) Key is " << k1);
-  /*for (size_t i = 0; i < k1.size(); ++i)
-  {
-    std::cout << i << " " << std::hex << static_cast<int>(static_cast<uint8_t>(k1.at(i))) << std::endl;
-  }*/
-
   LOG_INFO(m_logger, "(WRITE) Value is " << v1);
-  /*for (size_t i = 0; i < v1.size(); ++i)
-  {
-    std::cout << i << " " << std::hex << static_cast<int>(static_cast<uint8_t>(v1.at(i))) << std::endl;
-  }*/
 
   json body;
   body["command"] = "add";
@@ -340,7 +331,7 @@ bool InternalCommandsHandler::executeReadCommand(
     
     LOG_INFO(m_logger, "(READ) i num Read Item is: " << i);
     std::cout << "(READ) Key: " << std::string(replyItems[i].simpleKey.key, KV_LEN) << std::endl;
-    std::string k1(replyItems[i].simpleKey.key, KV_LEN);
+    std::string k1(replyItems[i].simpleKey.key);
     std::cout << "(READ) Size of Key: " << k1.length() << std::endl;
 
     LOG_INFO(m_logger, "(READ) Key is " << k1);
@@ -351,6 +342,7 @@ bool InternalCommandsHandler::executeReadCommand(
 
     std::stringstream buffer;
     buffer << body << std::endl;
+
     auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
     LOG_INFO(m_logger, "(READ) Status is " << res1->status);
     LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());

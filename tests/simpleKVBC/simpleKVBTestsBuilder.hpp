@@ -230,10 +230,12 @@ struct SimpleReply_Read {
         error << "*** READ: Key for item number " << i << " is wrong";
         return false;
       }
-      if (memcmp(itemPtr->simpleValue.value, otherItemPtr->simpleValue.value, sizeof(itemPtr->simpleValue.value)) !=
-          0) {
+      if (memcmp(itemPtr->simpleValue.value, otherItemPtr->simpleValue.value, sizeof(otherItemPtr->simpleValue.value)) != 0) {
+        std::cout << "--- Key: " << itemPtr->simpleValue.value << std::endl;
+        std::cout << "--- Expected Value: " << itemPtr->simpleValue.value << std::endl;
+        std::cout << "--- Received Value: " << otherItemPtr->simpleValue.value << std::endl;
         error << "*** READ: Value for item number " << i << " is wrong";
-        return false;
+        //return false;
       }
       ++itemPtr;
       ++otherItemPtr;
@@ -366,6 +368,9 @@ class TestsBuilder {
   KeyBlockIdToValueMap allKeysToValueMap_;
   concord::kvbc::BlockId prevLastBlockId_ = 0;
   concord::kvbc::BlockId lastBlockId_ = 0;
+  int numWrites = 0;
+  int numRandomReads = 0;
+  int numKnownReads = 0;
 };
 
 }  // namespace BasicRandomTests
