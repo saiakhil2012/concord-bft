@@ -34,7 +34,7 @@ using concord::kvbc::BlockId;
 using concord::kvbc::KeyValuePair;
 using concord::storage::SetOfKeyValuePairs;
 
-const uint64_t LONG_EXEC_CMD_TIME_IN_SEC = 11;
+//const uint64_t LONG_EXEC_CMD_TIME_IN_SEC = 11;
 
 int InternalCommandsHandler::execute(uint16_t clientId,
                                      uint64_t sequenceNum,
@@ -160,29 +160,41 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
   LOG_INFO(m_logger, "Test Status is " << res->status);
   LOG_INFO(m_logger, "Test Body is " << res->body);*/
 
-  std::cout << "(WRITE) Key: " << std::string(writeReq->keyValueArray()->simpleKey.key);
-  std::string k1(writeReq->keyValueArray()->simpleKey.key);
-  std::string v1(writeReq->keyValueArray()->simpleValue.value);
+  bool wroteKVSuccessfully = true;
+  for (size_t i = 0; i < writeReq->numOfWrites; i++) {
+      SimpleKV *keyValArray = writeReq->keyValueArray();
+      KeyValuePair keyValue(buildSliverFromStaticBuf(keyValArray[i].simpleKey.key),
+                            buildSliverFromStaticBuf(keyValArray[i].simpleValue.value));
 
-  LOG_INFO(m_logger, "(WRITE) Key is " << k1);
-  LOG_INFO(m_logger, "(WRITE) Value is " << v1);
+      std::cout << "(WRITE) Key: " << std::string(keyValArray[i].simpleKey.key);
+      std::string k1(keyValArray[i].simpleKey.key);
+      std::string v1(keyValArray[i].simpleValue.value);
 
-  json body;
-  body["command"] = "add";
-  body["key"] = k1;
-  body["value"] = v1;
+      LOG_INFO(m_logger, "(WRITE) Key is " << k1);
+      LOG_INFO(m_logger, "(WRITE) Value is " << v1);
 
-  std::stringstream buffer;
-  buffer << body << std::endl;
+      json body;
+      body["command"] = "add";
+      body["key"] = k1;
+      body["value"] = v1;
 
-  LOG_INFO(m_logger, "(WRITE) JSON object is " << buffer.str());
+      std::stringstream buffer;
+      buffer << body << std::endl;
 
-  auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
-  LOG_INFO(m_logger, "(WRITE) Status is " << res1->status);
-  LOG_INFO(m_logger, "(WRITE) Body is " << res1->body);
+      LOG_INFO(m_logger, "(WRITE) JSON object is " << buffer.str());
+
+      auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
+      LOG_INFO(m_logger, "(WRITE) Status is " << res1->status);
+      LOG_INFO(m_logger, "(WRITE) Body is " << res1->body);
+      LOG_INFO(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
+
+      if(res1->body.length() == 0) {
+        wroteKVSuccessfully = false;
+      }
+  }
 
 
-  if (writeReq->header.type == WEDGE) {
+  /*if (writeReq->header.type == WEDGE) {
     LOG_INFO(m_logger, "A wedge command has been called" << KVLOG(sequenceNum));
     controlStateManager_->setStopAtNextCheckpoint(sequenceNum);
   }
@@ -228,14 +240,17 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
     ConcordAssert(newBlockId == currBlock + 1);
   }
 
-  ConcordAssert(sizeof(SimpleReply_ConditionalWrite) <= maxReplySize);
+  ConcordAssert(sizeof(SimpleReply_ConditionalWrite) <= maxReplySize);*/
+  
+  
+  
   auto *reply = (SimpleReply_ConditionalWrite *)outReply;
   reply->header.type = COND_WRITE;
-  reply->success = (!hasConflict);
-  if (!hasConflict)
+  reply->success = wroteKVSuccessfully;
+  /*if (wroteKVSuccessfully)
     reply->latestBlock = currBlock + 1;
   else
-    reply->latestBlock = currBlock;
+    reply->latestBlock = currBlock;*/
 
   outReplySize = sizeof(SimpleReply_ConditionalWrite);
   ++m_writesCounter;
@@ -347,6 +362,7 @@ bool InternalCommandsHandler::executeReadCommand(
     LOG_INFO(m_logger, "(READ) Status is " << res1->status);
     LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
     LOG_INFO(m_logger, "(READ) Body is " << res1->body);
+    LOG_INFO(m_logger, "(READ) Number of Reads: " << ++numReads);
 
     /*Sliver value;
     BlockId outBlock = 0;
