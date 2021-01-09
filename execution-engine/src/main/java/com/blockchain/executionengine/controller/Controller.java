@@ -69,7 +69,9 @@ class Controller {
             }
             if (command.getCommandType().equals("get")) {
                 log.info("Key is " + command.getKey());
-                return restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class);
+                String response = restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class);
+                log.info("Response is " + response);
+                return response;
             } else if (command.getCommandType().equals("add")) {
                 KeyValue keyValue = new KeyValue(command.getKey(), command.getValue());
                 String requestJson = g.toJson(keyValue);

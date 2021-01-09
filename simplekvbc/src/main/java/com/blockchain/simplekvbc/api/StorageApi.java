@@ -26,6 +26,7 @@ public class StorageApi {
     public ResponseEntity<String> find(@PathVariable("key") String key) {
         log.info("RocksApi.find " + key);
         String result = rocksDB.find(key);
+        log.info("Response is " + result);
         if(result == null) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(result);
     }
