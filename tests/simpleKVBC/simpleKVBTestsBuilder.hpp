@@ -182,9 +182,9 @@ struct SimpleReply_ConditionalWrite {
   bool isEquiv(SimpleReply_ConditionalWrite& other, std::ostringstream& error) {
     if (header.type != other.header.type) {
       error << "*** Write: Wrong message type: " << other.header.type;
-    } else if (latestBlock != other.latestBlock) {
+    } /*else if (latestBlock != other.latestBlock) {
       error << "*** Write: Wrong latestBlock: " << other.latestBlock << ", expected: " << latestBlock;
-    } else if (success != other.success) {
+    }*/ else if (success != other.success) {
       error << "*** Write: Wrong result: " << other.success;
     } else {
       return true;
@@ -235,7 +235,7 @@ struct SimpleReply_Read {
         std::cout << "--- Expected Value: " << itemPtr->simpleValue.value << std::endl;
         std::cout << "--- Received Value: " << otherItemPtr->simpleValue.value << std::endl;
         error << "*** READ: Value for item number " << i << " is wrong";
-        //return false;
+        return false;
       }
       ++itemPtr;
       ++otherItemPtr;
