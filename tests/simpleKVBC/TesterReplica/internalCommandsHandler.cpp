@@ -145,7 +145,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
                                                   char *outReply,
                                                   uint32_t &outReplySize) {
   auto *writeReq = (SimpleCondWriteRequest *)request;
-  LOG_INFO(m_logger,
+  LOG_DEBUG(m_logger,
            "Execute WRITE command:"
                << ", executionEngineId=" << (int)writeReq->header.executionEngineId << " type=" << writeReq->header.type
                << " seqNum=" << sequenceNum << " numOfWrites=" << writeReq->numOfWrites
@@ -154,12 +154,12 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
                << " PRE_PROCESS_FLAG=" << ((flags & MsgFlag::PRE_PROCESS_FLAG) != 0 ? "true" : "false")
                << " HAS_PRE_PROCESSED_FLAG=" << ((flags & MsgFlag::HAS_PRE_PROCESSED_FLAG) != 0 ? "true" : "false"));
 
-  LOG_INFO(m_logger, "Caling a GET on Execution Engine");
+  LOG_DEBUG(m_logger, "Caling a GET on Execution Engine");
   Client cli("172.17.0.1", 8080);
 
   /*auto res = cli.Get("/test");
-  LOG_INFO(m_logger, "Test Status is " << res->status);
-  LOG_INFO(m_logger, "Test Body is " << res->body);*/
+  LOG_DEBUG(m_logger, "Test Status is " << res->status);
+  LOG_DEBUG(m_logger, "Test Body is " << res->body);*/
 
   bool wroteKVSuccessfully = true;
   for (size_t i = 0; i < writeReq->numOfWrites; i++) {
@@ -167,12 +167,11 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
       KeyValuePair keyValue(buildSliverFromStaticBuf(keyValArray[i].simpleKey.key),
                             buildSliverFromStaticBuf(keyValArray[i].simpleValue.value));
 
-      std::cout << "(WRITE) Key: " << std::string(keyValArray[i].simpleKey.key);
       std::string k1(keyValArray[i].simpleKey.key);
       std::string v1(keyValArray[i].simpleValue.value);
 
-      LOG_INFO(m_logger, "(WRITE) Key is " << k1);
-      LOG_INFO(m_logger, "(WRITE) Value is " << v1);
+      LOG_DEBUG(m_logger, "(WRITE) Key is " << k1);
+      LOG_DEBUG(m_logger, "(WRITE) Value is " << v1);
 
       json body;
       body["command"] = "add";
@@ -182,22 +181,22 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
       std::stringstream buffer;
       buffer << body << std::endl;
 
-      LOG_INFO(m_logger, "(WRITE) JSON object is " << buffer.str());
+      LOG_DEBUG(m_logger, "(WRITE) JSON object is " << buffer.str());
 
       if (isSecure == true) {
         auto res1 = cli.Post("/ee/secured/execute", buffer.str(), "application/json");
-        LOG_INFO(m_logger, "(WRITE) Status is " << res1->status);
-        LOG_INFO(m_logger, "(WRITE) Body is " << res1->body);
-        LOG_INFO(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
+        LOG_DEBUG(m_logger, "(WRITE) Status is " << res1->status);
+        LOG_DEBUG(m_logger, "(WRITE) Body is " << res1->body);
+        LOG_DEBUG(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
 
         if(res1->body.length() == 0) {
           wroteKVSuccessfully = false;
         }
       } else {
         auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
-        LOG_INFO(m_logger, "(WRITE) Status is " << res1->status);
-        LOG_INFO(m_logger, "(WRITE) Body is " << res1->body);
-        LOG_INFO(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
+        LOG_DEBUG(m_logger, "(WRITE) Status is " << res1->status);
+        LOG_DEBUG(m_logger, "(WRITE) Body is " << res1->body);
+        LOG_DEBUG(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
 
         if(res1->body.length() == 0) {
           wroteKVSuccessfully = false;
@@ -207,11 +206,11 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
 
 
   /*if (writeReq->header.type == WEDGE) {
-    LOG_INFO(m_logger, "A wedge command has been called" << KVLOG(sequenceNum));
+    LOG_DEBUG(m_logger, "A wedge command has been called" << KVLOG(sequenceNum));
     controlStateManager_->setStopAtNextCheckpoint(sequenceNum);
   }
   if (writeReq->header.type == ADD_REMOVE_NODE) {
-    LOG_INFO(m_logger, "An add_remove_node command has been called" << KVLOG(sequenceNum));
+    LOG_DEBUG(m_logger, "An add_remove_node command has been called" << KVLOG(sequenceNum));
     controlStateManager_->setStopAtNextCheckpoint(sequenceNum);
     controlStateManager_->setEraseMetadataFlag(sequenceNum);
   }
@@ -266,7 +265,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
 
   outReplySize = sizeof(SimpleReply_ConditionalWrite);
   ++m_writesCounter;
-  LOG_INFO(
+  LOG_DEBUG(
       m_logger,
       "ConditionalWrite message handled; writesCounter=" << m_writesCounter << " currBlock=" << reply->latestBlock);
   return true;
@@ -275,7 +274,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
 bool InternalCommandsHandler::executeGetBlockDataCommand(
     uint32_t requestSize, const char *request, size_t maxReplySize, char *outReply, uint32_t &outReplySize) {
   auto *req = (SimpleGetBlockDataRequest *)request;
-  LOG_INFO(m_logger, "Execute GET_BLOCK_DATA command: type=" << req->h.type << ", BlockId=" << req->block_id);
+  LOG_DEBUG(m_logger, "Execute GET_BLOCK_DATA command: type=" << req->h.type << ", BlockId=" << req->block_id);
 
   auto minRequestSize = std::max(sizeof(SimpleGetBlockDataRequest), req->size());
   if (requestSize < minRequestSize) {
@@ -295,7 +294,7 @@ bool InternalCommandsHandler::executeGetBlockDataCommand(
   const int numMetadataKeys = 1;
   auto numOfElements = outBlockData.size() - numMetadataKeys;
   size_t replySize = SimpleReply_Read::getSize(numOfElements);
-  LOG_INFO(m_logger, "NUM OF ELEMENTS IN BLOCK = " << numOfElements);
+  LOG_DEBUG(m_logger, "NUM OF ELEMENTS IN BLOCK = " << numOfElements);
   if (maxReplySize < replySize) {
     LOG_ERROR(m_logger, "replySize is too big: replySize=" << replySize << ", maxReplySize=" << maxReplySize);
     return false;
@@ -323,7 +322,7 @@ bool InternalCommandsHandler::executeGetBlockDataCommand(
 bool InternalCommandsHandler::executeReadCommand(
     uint32_t requestSize, const char *request, size_t maxReplySize, char *outReply, uint32_t &outReplySize) {
   auto *readReq = (SimpleReadRequest *)request;
-  LOG_INFO(m_logger,
+  LOG_DEBUG(m_logger,
            "Execute READ command: type=" << readReq->header.type << ", numberOfKeysToRead="
                                          << readReq->numberOfKeysToRead << ", readVersion=" << readReq->readVersion
                                          << ", executionEngineId=" << (int)readReq->header.executionEngineId);
@@ -348,7 +347,7 @@ bool InternalCommandsHandler::executeReadCommand(
   reply->header.type = READ;
   reply->numOfItems = numOfItems;
 
-  LOG_INFO(m_logger, "Caling a GET on Execution Engine");
+  LOG_DEBUG(m_logger, "Caling a GET on Execution Engine");
   Client cli("172.17.0.1", 8080);
 
   SimpleKey *readKeys = readReq->keys;
@@ -356,12 +355,11 @@ bool InternalCommandsHandler::executeReadCommand(
   for (size_t i = 0; i < numOfItems; i++) {
     memcpy(replyItems[i].simpleKey.key, readKeys[i].key, KV_LEN);
     
-    LOG_INFO(m_logger, "(READ) i num Read Item is: " << i);
-    std::cout << "(READ) Key: " << std::string(replyItems[i].simpleKey.key, KV_LEN) << std::endl;
+    LOG_DEBUG(m_logger, "(READ) i num Read Item is: " << i);
     std::string k1(replyItems[i].simpleKey.key);
-    std::cout << "(READ) Size of Key: " << k1.length() << std::endl;
 
-    LOG_INFO(m_logger, "(READ) Key is " << k1);
+    LOG_DEBUG(m_logger, "(READ) Key is " << k1);
+    LOG_DEBUG(m_logger, "(READ) Size of Key is " << k1.length());
 
     json body;
     body["command"] = "get";
@@ -372,10 +370,10 @@ bool InternalCommandsHandler::executeReadCommand(
 
     if (isSecure == true) {
       auto res1 = cli.Post("/ee/secured/execute", buffer.str(), "application/json");
-      LOG_INFO(m_logger, "(READ) Status is " << res1->status);
-      LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
-      LOG_INFO(m_logger, "(READ) Body is " << res1->body);
-      LOG_INFO(m_logger, "(READ) Number of Reads: " << ++numReads);
+      LOG_DEBUG(m_logger, "(READ) Status is " << res1->status);
+      LOG_DEBUG(m_logger, "(READ) Size of Body is " << res1->body.length());
+      LOG_DEBUG(m_logger, "(READ) Body is " << res1->body);
+      LOG_DEBUG(m_logger, "(READ) Number of Reads: " << ++numReads);
 
       if (res1->body.length() > 0) {
         strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
@@ -384,10 +382,10 @@ bool InternalCommandsHandler::executeReadCommand(
       }
     } else {
       auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
-      LOG_INFO(m_logger, "(READ) Status is " << res1->status);
-      LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
-      LOG_INFO(m_logger, "(READ) Body is " << res1->body);
-      LOG_INFO(m_logger, "(READ) Number of Reads: " << ++numReads);
+      LOG_DEBUG(m_logger, "(READ) Status is " << res1->status);
+      LOG_DEBUG(m_logger, "(READ) Size of Body is " << res1->body.length());
+      LOG_DEBUG(m_logger, "(READ) Body is " << res1->body);
+      LOG_DEBUG(m_logger, "(READ) Number of Reads: " << ++numReads);
 
       if (res1->body.length() > 0) {
         strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
@@ -397,7 +395,7 @@ bool InternalCommandsHandler::executeReadCommand(
     }
   }
   ++m_readsCounter;
-  LOG_INFO(m_logger, "READ message handled; readsCounter=" << m_readsCounter);
+  LOG_DEBUG(m_logger, "READ message handled; readsCounter=" << m_readsCounter);
   return true;
 }
 
@@ -408,7 +406,7 @@ bool InternalCommandsHandler::executeHaveYouStoppedReadCommand(uint32_t requestS
                                                                uint32_t &outReplySize,
                                                                uint32_t &specificReplicaInfoSize) {
   auto *readReq = (SimpleHaveYouStoppedRequest *)request;
-  LOG_INFO(m_logger, "Execute HaveYouStopped command: type=" << readReq->header.type);
+  LOG_DEBUG(m_logger, "Execute HaveYouStopped command: type=" << readReq->header.type);
 
   specificReplicaInfoSize = sizeof(int64_t);
   outReplySize = sizeof(SimpleReply);
@@ -420,7 +418,7 @@ bool InternalCommandsHandler::executeHaveYouStoppedReadCommand(uint32_t requestS
   auto *reply = (SimpleReply_HaveYouStopped *)(outReply);
   reply->header.type = WEDGE;
   reply->stopped = controlHandlers_->haveYouStopped(readReq->n_of_n_stop);
-  LOG_INFO(m_logger, "HaveYouStopped message handled");
+  LOG_DEBUG(m_logger, "HaveYouStopped message handled");
   return true;
 }
 
@@ -428,7 +426,7 @@ bool InternalCommandsHandler::executeGetLastBlockCommand(uint32_t requestSize,
                                                          size_t maxReplySize,
                                                          char *outReply,
                                                          uint32_t &outReplySize) {
-  LOG_INFO(m_logger, "GET LAST BLOCK!!!");
+  LOG_DEBUG(m_logger, "GET LAST BLOCK!!!");
 
   if (requestSize < sizeof(SimpleGetLastBlockRequest)) {
     LOG_ERROR(m_logger,
@@ -447,7 +445,7 @@ bool InternalCommandsHandler::executeGetLastBlockCommand(uint32_t requestSize,
   reply->header.type = GET_LAST_BLOCK;
   reply->latestBlock = m_storage->getLastBlock();
   ++m_getLastBlockCounter;
-  LOG_INFO(m_logger,
+  LOG_DEBUG(m_logger,
            "GetLastBlock message handled; getLastBlockCounter=" << m_getLastBlockCounter
                                                                 << ", latestBlock=" << reply->latestBlock);
   return true;

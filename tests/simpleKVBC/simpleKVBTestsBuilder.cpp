@@ -42,11 +42,11 @@ namespace BasicRandomTests {
 TestsBuilder::TestsBuilder(logging::Logger &logger, IClient &client) : logger_(logger), client_(client) {
   prevLastBlockId_ = getInitialLastBlockId();
   lastBlockId_ = prevLastBlockId_;
-  LOG_INFO(logger, "TestsBuilder: initialBlockId_=" << prevLastBlockId_);
+  LOG_DEBUG(logger, "TestsBuilder: initialBlockId_=" << prevLastBlockId_);
 }
 
 TestsBuilder::~TestsBuilder() {
-  LOG_INFO(logger_, "TestsBuilder: The last DB block is " << lastBlockId_);
+  LOG_DEBUG(logger_, "TestsBuilder: The last DB block is " << lastBlockId_);
   for (auto elem : requests_) delete[] elem;
   for (auto elem : replies_) delete[] elem;
 }
@@ -72,7 +72,7 @@ BlockId TestsBuilder::getInitialLastBlockId() {
   ConcordAssert(res.isOK());
 
   auto *replyObj = (SimpleReply_GetLastBlock *)reply.data();
-  LOG_INFO(logger_, "Actual reply size = " << actualReplySize << ", expected reply size = " << expectedReplySize);
+  LOG_DEBUG(logger_, "Actual reply size = " << actualReplySize << ", expected reply size = " << expectedReplySize);
   ConcordAssert(actualReplySize == expectedReplySize);
   ConcordAssert(replyObj->header.type == GET_LAST_BLOCK);
   SimpleGetLastBlockRequest::free(request);
@@ -143,20 +143,20 @@ void TestsBuilder::create(size_t numOfRequests, size_t seed) {
   }*/
 
   for (size_t i = 0; i < numOfRequests; i++) {
-    std::cout << "Running Statistics" << std::endl;
+    /*std::cout << "Running Statistics" << std::endl;
     std::cout << "Num of Write Requests: " << numWrites << std::endl;
     std::cout << "Num of Random Read Requests: " << numRandomReads << std::endl;
-    std::cout << "Num of Known Read Requests: " << numKnownReads << std::endl;
+    std::cout << "Num of Known Read Requests: " << numKnownReads << std::endl;*/
     if (i < numOfRequests/2)
       createAndInsertRandomConditionalWrite();
     else 
       createAndInsertReadPreviouslyWrittenKey();
   }
 
-  std::cout << "Final Statistics" << std::endl;
+  /*std::cout << "Final Statistics" << std::endl;
   std::cout << "Num of Writes Requests: " << numWrites << std::endl;
   std::cout << "Num of Random Read Requests: " << numRandomReads << std::endl;
-  std::cout << "Num of Known Read Requests: " << numKnownReads << std::endl;
+  std::cout << "Num of Known Read Requests: " << numKnownReads << std::endl;*/
 
   for (__attribute__((unused)) auto elem : internalBlockchain_) {
     __attribute__((unused)) BlockId blockId = elem.first;
@@ -287,7 +287,7 @@ std::string TestsBuilder::genRandomString(int n) {
   for (int i = 0; i < n; i++) {
       randStr = randStr + options[rand() % 26];
   }
-  std::cout << randStr << endl;
+  //std::cout << randStr << endl;
   return randStr;
 }
 
@@ -310,7 +310,7 @@ void TestsBuilder::createAndInsertRandomRead() {
   for (size_t i = 0; i < numberOfKeysToRead; i++) {
     std::string key = "";
     key = genRandomString(KV_LEN-1);
-    std::cout << "Random Read Key" << key << endl;
+    //std::cout << "Random Read Key" << key << endl;
     //memcpy(requestKeys[i].key, &key, sizeof(key));
     strcpy(requestKeys[i].key, key.c_str());
     //key.copy(requestKeys[i].key, KV_LEN);
@@ -367,7 +367,7 @@ void TestsBuilder::createAndInsertReadPreviouslyWrittenKey() {
       std::advance(it, rand() % writtenKeyValueMap.size());
       key = it->first;
     } else {
-      std::cout<<"Random Keys being generated for Reading" << std::endl;
+      //std::cout<<"Random Keys being generated for Reading" << std::endl;
       key = genRandomString(KV_LEN-1);
     }
     //memcpy(requestKeys[i].key, &key, sizeof(key));
@@ -387,11 +387,11 @@ void TestsBuilder::createAndInsertReadPreviouslyWrittenKey() {
   for (size_t i = 0; i < numberOfKeysToRead; i++) {
     memcpy(replyItems[i].simpleKey.key, requestKeys[i].key, KV_LEN);
     std::string key(requestKeys[i].key);
-    std::cout<<"Previously Added Key is: " << requestKeys[i].key << std::endl;
-    std::cout<<"Value for above previosuly Added Key is: " << writtenKeyValueMap.find(key)->second.c_str() << std::endl;
+    //std::cout<<"Previously Added Key is: " << requestKeys[i].key << std::endl;
+    //std::cout<<"Value for above previosuly Added Key is: " << writtenKeyValueMap.find(key)->second.c_str() << std::endl;
     strcpy(replyItems[i].simpleValue.value, writtenKeyValueMap.find(key)->second.c_str());
-    std::cout<<"After writing, key: " << replyItems[i].simpleKey.key << std::endl;
-    std::cout<<"After writing, value: " << replyItems[i].simpleValue.value << std::endl;
+    //std::cout<<"After writing, key: " << replyItems[i].simpleKey.key << std::endl;
+    //std::cout<<"After writing, value: " << replyItems[i].simpleValue.value << std::endl;
     
     /*SimpleKeyBlockIdPair simpleKIDPair(requestKeys[i], request->readVersion);
     KeyBlockIdToValueMap::const_iterator it = allKeysToValueMap_.lower_bound(simpleKIDPair);

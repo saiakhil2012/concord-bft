@@ -47,14 +47,14 @@ class Controller {
 
     @GetMapping("/ee/{key}")
     String getValue(@PathVariable String key) {
-        log.info("Get and now calling db");
+        log.debug("Get and now calling db");
         return restTemplate.getForObject(dbUrl + "/" + key, String.class);
     }
 
     @PostMapping("/ee/execute")
     String newKeyValue(@RequestBody String request) {
-        log.info("Post and now calling db");
-        log.info("Request is " + request);
+        log.debug("Post and now calling db");
+        log.debug("Request is " + request);
         try {
             Command command = new Command();
             JSONObject reqObject = new JSONObject(request);
@@ -68,9 +68,9 @@ class Controller {
                 }
             }
             if (command.getCommandType().equals("get")) {
-                log.info("Key is " + command.getKey());
+                log.debug("Key is " + command.getKey());
                 String response = restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class);
-                log.info("Response is " + response);
+                log.debug("Response is " + response);
                 return response;
             } else if (command.getCommandType().equals("add")) {
                 KeyValue keyValue = new KeyValue(command.getKey(), command.getValue());
@@ -98,8 +98,8 @@ class Controller {
 
     @PostMapping("/ee/secured/execute")
     String newSecuredKeyValue(@RequestBody String request) {
-        log.info("Secured Post and now calling db");
-        log.info("Request is " + request);
+        log.debug("Secured Post and now calling db");
+        log.debug("Request is " + request);
         try {
             StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
             encryptor.setPassword(seed);
@@ -117,9 +117,9 @@ class Controller {
                 }
             }
             if (command.getCommandType().equals("get")) {
-                log.info("Key is " + command.getKey());
+                log.debug("Key is " + command.getKey());
                 String response = encryptor.decrypt(restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class));
-                log.info("Response is " + response);
+                log.debug("Response is " + response);
                 return response;
             } else if (command.getCommandType().equals("add")) {
                 KeyValue keyValue = new KeyValue(command.getKey(), command.getValue());
