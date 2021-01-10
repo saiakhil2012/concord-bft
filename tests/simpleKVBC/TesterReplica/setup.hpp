@@ -26,6 +26,8 @@
 #include "s3/client.hpp"
 #endif
 
+extern bool isSecure;
+
 namespace concord::kvbc {
 
 class TestSetup {

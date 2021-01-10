@@ -31,6 +31,8 @@
 #include "direct_kv_storage_factory.h"
 #include "merkle_tree_storage_factory.h"
 
+bool isSecure;
+
 namespace concord::kvbc {
 
 std::unique_ptr<TestSetup> TestSetup::ParseArgs(int argc, char** argv) {
@@ -55,6 +57,7 @@ std::unique_ptr<TestSetup> TestSetup::ParseArgs(int argc, char** argv) {
     auto storageType = StorageType::V1DirectKeyValue;
 
     static struct option longOptions[] = {{"replica-id", required_argument, 0, 'i'},
+                                          {"secured-run", no_argument, 0, 'g'},
                                           {"key-file-prefix", required_argument, 0, 'k'},
                                           {"network-config-file", required_argument, 0, 'n'},
                                           {"status-report-timeout", required_argument, 0, 's'},
@@ -76,7 +79,7 @@ std::unique_ptr<TestSetup> TestSetup::ParseArgs(int argc, char** argv) {
     int o = 0;
     int optionIndex = 0;
     LOG_INFO(GL, "Command line options:");
-    while ((o = getopt_long(argc, argv, "i:k:n:s:v:a:3:pt:l:c:e:b:m:q:y:z:", longOptions, &optionIndex)) != -1) {
+    while ((o = getopt_long(argc, argv, "i:gk:n:s:v:a:3:pt:l:c:e:b:m:q:y:z:", longOptions, &optionIndex)) != -1) {
       switch (o) {
         case 'i': {
           replicaConfig.replicaId = concord::util::to<std::uint16_t>(std::string(optarg));
@@ -116,6 +119,9 @@ std::unique_ptr<TestSetup> TestSetup::ParseArgs(int argc, char** argv) {
         // We can only toggle persistence on or off. It defaults to InMemory unless -p flag is provided.
         case 'p': {
           persistMode = PersistencyMode::RocksDB;
+        } break;
+        case 'g': {
+          isSecure = true;
         } break;
         case 't': {
           if (optarg == std::string{"v1direct"}) {

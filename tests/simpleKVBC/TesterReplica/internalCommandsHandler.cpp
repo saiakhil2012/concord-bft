@@ -15,6 +15,7 @@
 #include "OpenTracing.hpp"
 #include "assertUtils.hpp"
 #include "sliver.hpp"
+#include "setup.hpp"
 #include "kv_types.hpp"
 #include "block_metadata.hpp"
 #include "httplib.h"
@@ -183,13 +184,24 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
 
       LOG_INFO(m_logger, "(WRITE) JSON object is " << buffer.str());
 
-      auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
-      LOG_INFO(m_logger, "(WRITE) Status is " << res1->status);
-      LOG_INFO(m_logger, "(WRITE) Body is " << res1->body);
-      LOG_INFO(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
+      if (isSecure == true) {
+        auto res1 = cli.Post("/ee/secured/execute", buffer.str(), "application/json");
+        LOG_INFO(m_logger, "(WRITE) Status is " << res1->status);
+        LOG_INFO(m_logger, "(WRITE) Body is " << res1->body);
+        LOG_INFO(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
 
-      if(res1->body.length() == 0) {
-        wroteKVSuccessfully = false;
+        if(res1->body.length() == 0) {
+          wroteKVSuccessfully = false;
+        }
+      } else {
+        auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
+        LOG_INFO(m_logger, "(WRITE) Status is " << res1->status);
+        LOG_INFO(m_logger, "(WRITE) Body is " << res1->body);
+        LOG_INFO(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
+
+        if(res1->body.length() == 0) {
+          wroteKVSuccessfully = false;
+        }
       }
   }
 
@@ -358,27 +370,31 @@ bool InternalCommandsHandler::executeReadCommand(
     std::stringstream buffer;
     buffer << body << std::endl;
 
-    auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
-    LOG_INFO(m_logger, "(READ) Status is " << res1->status);
-    LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
-    LOG_INFO(m_logger, "(READ) Body is " << res1->body);
-    LOG_INFO(m_logger, "(READ) Number of Reads: " << ++numReads);
+    if (isSecure == true) {
+      auto res1 = cli.Post("/ee/secured/execute", buffer.str(), "application/json");
+      LOG_INFO(m_logger, "(READ) Status is " << res1->status);
+      LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
+      LOG_INFO(m_logger, "(READ) Body is " << res1->body);
+      LOG_INFO(m_logger, "(READ) Number of Reads: " << ++numReads);
 
-    /*Sliver value;
-    BlockId outBlock = 0;
-    if (!m_storage->get(readReq->readVersion, buildSliverFromStaticBuf(readKeys[i].key), value, outBlock).isOK()) {
-      LOG_ERROR(m_logger, "Read: Failed to get keys for readVersion = %" << readReq->readVersion);
-      return false;
-    }*/
-
-    if (res1->body.length() > 0) {
-      //memcpy(replyItems->simpleValue.value, res1->body, KV_LEN);
-      strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
+      if (res1->body.length() > 0) {
+        strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
+      } else {
+        memset(replyItems[i].simpleValue.value, 0, KV_LEN);
+      }
     } else {
-      memset(replyItems[i].simpleValue.value, 0, KV_LEN);
+      auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
+      LOG_INFO(m_logger, "(READ) Status is " << res1->status);
+      LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
+      LOG_INFO(m_logger, "(READ) Body is " << res1->body);
+      LOG_INFO(m_logger, "(READ) Number of Reads: " << ++numReads);
+
+      if (res1->body.length() > 0) {
+        strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
+      } else {
+        memset(replyItems[i].simpleValue.value, 0, KV_LEN);
+      }
     }
-    //++readKeys;
-    //++replyItems;
   }
   ++m_readsCounter;
   LOG_INFO(m_logger, "READ message handled; readsCounter=" << m_readsCounter);
