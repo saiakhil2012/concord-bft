@@ -99,6 +99,7 @@ class Controller {
     @PostMapping("/ee/secured/execute")
     String newSecuredKeyValue(@RequestBody String request) {
         log.info("Secured Post and now calling db");
+        log.info("Request is " + request);
         try {
             StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
             encryptor.setPassword(seed);
@@ -117,7 +118,9 @@ class Controller {
             }
             if (command.getCommandType().equals("get")) {
                 log.info("Key is " + command.getKey());
-                return encryptor.decrypt(restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class));
+                String response = encryptor.decrypt(restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class));
+                log.info("Response is " + response);
+                return response;
             } else if (command.getCommandType().equals("add")) {
                 KeyValue keyValue = new KeyValue(command.getKey(), command.getValue());
                 String requestJson = g.toJson(keyValue);
