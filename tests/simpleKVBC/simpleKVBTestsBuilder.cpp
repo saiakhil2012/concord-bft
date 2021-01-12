@@ -142,15 +142,26 @@ void TestsBuilder::create(size_t numOfRequests, size_t seed) {
       ConcordAssert(0);
   }*/
 
+  //srand(seed);
   for (size_t i = 0; i < numOfRequests; i++) {
     /*std::cout << "Running Statistics" << std::endl;
     std::cout << "Num of Write Requests: " << numWrites << std::endl;
     std::cout << "Num of Random Read Requests: " << numRandomReads << std::endl;
     std::cout << "Num of Known Read Requests: " << numKnownReads << std::endl;*/
-    if (i < numOfRequests/2)
-      createAndInsertRandomConditionalWrite();
-    else 
-      createAndInsertReadPreviouslyWrittenKey();
+    //int executionEngineID = (rand() % 20) + 1;
+    if (i < numOfRequests/2) {
+      if (i < numOfRequests/4) {
+        createAndInsertRandomConditionalWrite(0);
+      } else {
+        createAndInsertRandomConditionalWrite(0);
+      }
+    } else {
+      if (i < (3*numOfRequests/4)) {
+        createAndInsertReadPreviouslyWrittenKey(0);
+      } else {
+        createAndInsertReadPreviouslyWrittenKey(0);
+      }
+    }
   }
 
   /*std::cout << "Final Statistics" << std::endl;
@@ -215,7 +226,7 @@ void TestsBuilder::addNewBlock(size_t numOfWrites, SimpleKV *writesKVArray) {
   internalBlockchain_[lastBlockId_] = newBlock;
 }
 
-void TestsBuilder::createAndInsertRandomConditionalWrite() {
+void TestsBuilder::createAndInsertRandomConditionalWrite(int executionId) {
   // Create request
   BlockId readVersion = lastBlockId_;
   if (lastBlockId_ > prevLastBlockId_ + CONFLICT_DISTANCE) {
@@ -223,12 +234,15 @@ void TestsBuilder::createAndInsertRandomConditionalWrite() {
     while (readVersion < prevLastBlockId_) readVersion = lastBlockId_ - (rand() % CONFLICT_DISTANCE);
   }
 
-  size_t numOfWrites = (rand() % (MAX_WRITES_IN_REQ - 1)) + 1;
-  size_t numOfKeysInReadSet = (rand() % MAX_READ_SET_SIZE_IN_REQ);
+  //size_t numOfWrites = (rand() % (MAX_WRITES_IN_REQ - 1)) + 1;
+  //size_t numOfKeysInReadSet = (rand() % MAX_READ_SET_SIZE_IN_REQ);
+
+  size_t numOfWrites = MAX_WRITES_IN_REQ - 1;
+  size_t numOfKeysInReadSet = MAX_READ_SET_SIZE_IN_REQ;
 
   auto *request = SimpleCondWriteRequest::alloc(numOfKeysInReadSet, numOfWrites);
   request->header.type = COND_WRITE;
-  request->header.executionEngineId = 0;
+  request->header.executionEngineId = executionId;
   request->readVersion = readVersion;
   request->numOfKeysInReadSet = numOfKeysInReadSet;
   request->numOfWrites = numOfWrites;
@@ -255,7 +269,11 @@ void TestsBuilder::createAndInsertRandomConditionalWrite() {
     value = genRandomString(KV_LEN-1);
 
     //writtenKeyValueMap.insert(key, value);
-    writtenKeyValueMap[key] = value;
+    if (executionId == 0) {
+      writtenKeyValueMap[key] = value;
+    } else {
+      writtenSecuredKeyValueMap[key] = value;
+    }
 
     //memcpy(writesKVArray[i].simpleKey.key, &key, sizeof(key));
     //memcpy(writesKVArray[i].simpleValue.value, &value, sizeof(value));
@@ -299,7 +317,8 @@ void TestsBuilder::createAndInsertRandomRead() {
   } else {  // New blocks have been written to the DB during this run.
     while (readVersion <= prevLastBlockId_) readVersion = (rand() % (lastBlockId_ + 1));
   }
-  size_t numberOfKeysToRead = (rand() % (MAX_READS_IN_REQ - 1)) + 1;
+  //size_t numberOfKeysToRead = (rand() % (MAX_READS_IN_REQ - 1)) + 1;
+  size_t numberOfKeysToRead = MAX_READS_IN_REQ - 1;
   auto *request = SimpleReadRequest::alloc(numberOfKeysToRead);
   request->header.type = READ;
   request->header.executionEngineId = 0;
@@ -344,7 +363,7 @@ void TestsBuilder::createAndInsertRandomRead() {
 }
 
 // If no written keys, it falls back to reading a random generated key
-void TestsBuilder::createAndInsertReadPreviouslyWrittenKey() {
+void TestsBuilder::createAndInsertReadPreviouslyWrittenKey(int executionId) {
   // Create request
   BlockId readVersion = 0;
   if (prevLastBlockId_ == lastBlockId_) {
@@ -352,23 +371,37 @@ void TestsBuilder::createAndInsertReadPreviouslyWrittenKey() {
   } else {  // New blocks have been written to the DB during this run.
     while (readVersion <= prevLastBlockId_) readVersion = (rand() % (lastBlockId_ + 1));
   }
-  size_t numberOfKeysToRead = (rand() % (MAX_READS_IN_REQ - 1)) + 1;
+  //size_t numberOfKeysToRead = (rand() % (MAX_READS_IN_REQ - 1)) + 1;
+  size_t numberOfKeysToRead = MAX_READS_IN_REQ - 1;
   auto *request = SimpleReadRequest::alloc(numberOfKeysToRead);
   request->header.type = READ;
-  request->header.executionEngineId = 0;
+  request->header.executionEngineId = executionId;
   request->readVersion = readVersion;
   request->numberOfKeysToRead = numberOfKeysToRead;
 
   SimpleKey *requestKeys = request->keys;
   for (size_t i = 0; i < numberOfKeysToRead; i++) {
     std::string key = "";
-    if (writtenKeyValueMap.size() > 0) {
-      auto it = writtenKeyValueMap.begin();
-      std::advance(it, rand() % writtenKeyValueMap.size());
-      key = it->first;
+    if (executionId == 0) {
+      // For Normal EE
+      if (writtenKeyValueMap.size() > 0) {
+        auto it = writtenKeyValueMap.begin();
+        std::advance(it, rand() % writtenKeyValueMap.size());
+        key = it->first;
+      } else {
+        //std::cout<<"Random Keys being generated for Reading" << std::endl;
+        key = genRandomString(KV_LEN-1);
+      }
     } else {
-      //std::cout<<"Random Keys being generated for Reading" << std::endl;
-      key = genRandomString(KV_LEN-1);
+      // For Secured EE
+      if (writtenSecuredKeyValueMap.size() > 0) {
+        auto it = writtenSecuredKeyValueMap.begin();
+        std::advance(it, rand() % writtenSecuredKeyValueMap.size());
+        key = it->first;
+      } else {
+        //std::cout<<"Random Keys being generated for Reading" << std::endl;
+        key = genRandomString(KV_LEN-1);
+      }
     }
     //memcpy(requestKeys[i].key, &key, sizeof(key));
     strcpy(requestKeys[i].key, key.c_str());
@@ -389,7 +422,11 @@ void TestsBuilder::createAndInsertReadPreviouslyWrittenKey() {
     std::string key(requestKeys[i].key);
     //std::cout<<"Previously Added Key is: " << requestKeys[i].key << std::endl;
     //std::cout<<"Value for above previosuly Added Key is: " << writtenKeyValueMap.find(key)->second.c_str() << std::endl;
-    strcpy(replyItems[i].simpleValue.value, writtenKeyValueMap.find(key)->second.c_str());
+    if (executionId == 0) {
+      strcpy(replyItems[i].simpleValue.value, writtenKeyValueMap.find(key)->second.c_str());
+    } else {
+      strcpy(replyItems[i].simpleValue.value, writtenSecuredKeyValueMap.find(key)->second.c_str());
+    }
     //std::cout<<"After writing, key: " << replyItems[i].simpleKey.key << std::endl;
     //std::cout<<"After writing, value: " << replyItems[i].simpleValue.value << std::endl;
     

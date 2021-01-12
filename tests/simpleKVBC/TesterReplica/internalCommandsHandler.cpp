@@ -37,6 +37,9 @@ using concord::storage::SetOfKeyValuePairs;
 
 //const uint64_t LONG_EXEC_CMD_TIME_IN_SEC = 11;
 
+const std::string NORMAL_URL = "/ee/execute";
+const std::string SECURED_URL = "/ee/secured/execute";
+
 int InternalCommandsHandler::execute(uint16_t clientId,
                                      uint64_t sequenceNum,
                                      uint8_t flags,
@@ -183,24 +186,24 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
 
       LOG_DEBUG(m_logger, "(WRITE) JSON object is " << buffer.str());
 
-      if (isSecure == true) {
-        auto res1 = cli.Post("/ee/secured/execute", buffer.str(), "application/json");
-        LOG_DEBUG(m_logger, "(WRITE) Status is " << res1->status);
-        LOG_DEBUG(m_logger, "(WRITE) Body is " << res1->body);
-        LOG_DEBUG(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
-
-        if(res1->body.length() == 0) {
-          wroteKVSuccessfully = false;
-        }
+      std::string base_url;
+      if (isSecure) {
+        base_url = SECURED_URL;
       } else {
-        auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
-        LOG_DEBUG(m_logger, "(WRITE) Status is " << res1->status);
-        LOG_DEBUG(m_logger, "(WRITE) Body is " << res1->body);
-        LOG_DEBUG(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
-
-        if(res1->body.length() == 0) {
-          wroteKVSuccessfully = false;
+        if (writeReq->header.executionEngineId == 0) {
+          base_url.assign(NORMAL_URL);
+        } else {
+          base_url.assign(SECURED_URL);
         }
+      }
+
+      auto res1 = cli.Post(&base_url[0], buffer.str(), "application/json");
+      LOG_DEBUG(m_logger, "(WRITE) Status is " << res1->status);
+      LOG_DEBUG(m_logger, "(WRITE) Body is " << res1->body);
+      LOG_DEBUG(m_logger, "(WRITE) Number of Writes: " << ++numWrites);
+
+      if(res1->body.length() == 0) {
+        wroteKVSuccessfully = false;
       }
   }
 
@@ -368,30 +371,27 @@ bool InternalCommandsHandler::executeReadCommand(
     std::stringstream buffer;
     buffer << body << std::endl;
 
-    if (isSecure == true) {
-      auto res1 = cli.Post("/ee/secured/execute", buffer.str(), "application/json");
-      LOG_DEBUG(m_logger, "(READ) Status is " << res1->status);
-      LOG_DEBUG(m_logger, "(READ) Size of Body is " << res1->body.length());
-      LOG_DEBUG(m_logger, "(READ) Body is " << res1->body);
-      LOG_DEBUG(m_logger, "(READ) Number of Reads: " << ++numReads);
-
-      if (res1->body.length() > 0) {
-        strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
-      } else {
-        memset(replyItems[i].simpleValue.value, 0, KV_LEN);
-      }
+    std::string base_url;
+    if (isSecure) {
+      base_url = SECURED_URL;
     } else {
-      auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
-      LOG_DEBUG(m_logger, "(READ) Status is " << res1->status);
-      LOG_DEBUG(m_logger, "(READ) Size of Body is " << res1->body.length());
-      LOG_DEBUG(m_logger, "(READ) Body is " << res1->body);
-      LOG_DEBUG(m_logger, "(READ) Number of Reads: " << ++numReads);
-
-      if (res1->body.length() > 0) {
-        strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
+      if (readReq->header.executionEngineId == 0) {
+        base_url.assign(NORMAL_URL);
       } else {
-        memset(replyItems[i].simpleValue.value, 0, KV_LEN);
+        base_url.assign(SECURED_URL);
       }
+    }
+
+    auto res1 = cli.Post(&base_url[0], buffer.str(), "application/json");
+    LOG_DEBUG(m_logger, "(READ) Status is " << res1->status);
+    LOG_DEBUG(m_logger, "(READ) Size of Body is " << res1->body.length());
+    LOG_DEBUG(m_logger, "(READ) Body is " << res1->body);
+    LOG_DEBUG(m_logger, "(READ) Number of Reads: " << ++numReads);
+
+    if (res1->body.length() > 0) {
+      strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
+    } else {
+      memset(replyItems[i].simpleValue.value, 0, KV_LEN);
     }
   }
   ++m_readsCounter;

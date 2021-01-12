@@ -231,7 +231,7 @@ struct SimpleReply_Read {
         return false;
       }
       if (memcmp(itemPtr->simpleValue.value, otherItemPtr->simpleValue.value, sizeof(otherItemPtr->simpleValue.value)) != 0) {
-        std::cout << "--- Key: " << itemPtr->simpleValue.value << std::endl;
+        std::cout << "--- Key: " << itemPtr->simpleKey.key << std::endl;
         std::cout << "--- Expected Value: " << itemPtr->simpleValue.value << std::endl;
         std::cout << "--- Received Value: " << otherItemPtr->simpleValue.value << std::endl;
         error << "*** READ: Value for item number " << i << " is wrong";
@@ -348,8 +348,8 @@ class TestsBuilder {
  private:
   void create(size_t numOfRequests, size_t seed);
   std::string genRandomString(int n);
-  void createAndInsertRandomConditionalWrite();
-  void createAndInsertReadPreviouslyWrittenKey();
+  void createAndInsertRandomConditionalWrite(int executionId);
+  void createAndInsertReadPreviouslyWrittenKey(int executionId);
   void createAndInsertRandomRead();
   void createAndInsertGetLastBlock();
   void addExpectedWriteReply(bool foundConflict);
@@ -365,6 +365,7 @@ class TestsBuilder {
   RepliesList replies_;
   std::map<concord::kvbc::BlockId, SimpleBlock*> internalBlockchain_;
   std::map<std::string, std::string> writtenKeyValueMap;
+  std::map<std::string, std::string> writtenSecuredKeyValueMap;
   KeyBlockIdToValueMap allKeysToValueMap_;
   concord::kvbc::BlockId prevLastBlockId_ = 0;
   concord::kvbc::BlockId lastBlockId_ = 0;
