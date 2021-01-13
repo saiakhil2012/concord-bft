@@ -111,15 +111,16 @@ class Controller {
                     if (reqObject.has("value")) {
                         //command = new Command(reqObject.getString("command"), reqObject.getString("key"),
                                 //encryptor.encrypt(reqObject.getString("value")));
-                        command = new Command(reqObject.getString("command"), (reqObject.getString("key")),
+                        command = new Command(reqObject.getString("command"), encryptor.encrypt(reqObject.getString("key")),
                                 encryptor.encrypt(reqObject.getString("value")));
                     } else {
-                        command = new Command(reqObject.getString("command"), (reqObject.getString("key")), "");
+                        command = new Command(reqObject.getString("command"), encryptor.encrypt(reqObject.getString("key")), "");
                     }
                 }
             }
             if (command.getCommandType().equals("get")) {
-                log.debug("Key is " + command.getKey());
+                log.info("Key is " + command.getKey());
+                log.info("Encypted Key is " + encryptor.encrypt(command.getKey()));
                 String response = encryptor.decrypt(restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class));
                 log.debug("Response is " + response);
                 return response;
