@@ -158,7 +158,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
                << " HAS_PRE_PROCESSED_FLAG=" << ((flags & MsgFlag::HAS_PRE_PROCESSED_FLAG) != 0 ? "true" : "false"));
 
   LOG_DEBUG(m_logger, "Caling a GET on Execution Engine");
-  Client cli("172.17.0.1", 8080);
+  Client cli("172.17.0.1", 8090 + (int)writeReq->header.executionEngineId);
 
   /*auto res = cli.Get("/test");
   LOG_DEBUG(m_logger, "Test Status is " << res->status);
@@ -173,8 +173,9 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
       std::string k1(keyValArray[i].simpleKey.key);
       std::string v1(keyValArray[i].simpleValue.value);
 
-      LOG_DEBUG(m_logger, "(WRITE) Key is " << k1);
-      LOG_DEBUG(m_logger, "(WRITE) Value is " << v1);
+      LOG_INFO(m_logger, "PORT is " << 8090 + (int)writeReq->header.executionEngineId);
+      LOG_INFO(m_logger, "(WRITE) Key is " << k1);
+      LOG_INFO(m_logger, "(WRITE) Value is " << v1);
 
       json body;
       body["command"] = "add";
@@ -184,7 +185,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
       std::stringstream buffer;
       buffer << body << std::endl;
 
-      LOG_DEBUG(m_logger, "(WRITE) JSON object is " << buffer.str());
+      LOG_INFO(m_logger, "(WRITE) JSON object is " << buffer.str());
 
       std::string base_url;
       if (isSecure) {
@@ -351,18 +352,19 @@ bool InternalCommandsHandler::executeReadCommand(
   reply->numOfItems = numOfItems;
 
   LOG_DEBUG(m_logger, "Caling a GET on Execution Engine");
-  Client cli("172.17.0.1", 8080);
+  Client cli("172.17.0.1", 8090 + (int)readReq->header.executionEngineId);
 
   SimpleKey *readKeys = readReq->keys;
   SimpleKV *replyItems = reply->items;
   for (size_t i = 0; i < numOfItems; i++) {
     memcpy(replyItems[i].simpleKey.key, readKeys[i].key, KV_LEN);
     
-    LOG_DEBUG(m_logger, "(READ) i num Read Item is: " << i);
+    LOG_INFO(m_logger, "(READ) i num Read Item is: " << i);
     std::string k1(replyItems[i].simpleKey.key);
 
-    LOG_DEBUG(m_logger, "(READ) Key is " << k1);
-    LOG_DEBUG(m_logger, "(READ) Size of Key is " << k1.length());
+    LOG_INFO(m_logger, "PORT is " << 8090 + (int)readReq->header.executionEngineId);
+    LOG_INFO(m_logger, "(READ) Key is " << k1);
+    LOG_INFO(m_logger, "(READ) Size of Key is " << k1.length());
 
     json body;
     body["command"] = "get";
@@ -383,10 +385,10 @@ bool InternalCommandsHandler::executeReadCommand(
     }
 
     auto res1 = cli.Post(&base_url[0], buffer.str(), "application/json");
-    LOG_DEBUG(m_logger, "(READ) Status is " << res1->status);
-    LOG_DEBUG(m_logger, "(READ) Size of Body is " << res1->body.length());
-    LOG_DEBUG(m_logger, "(READ) Body is " << res1->body);
-    LOG_DEBUG(m_logger, "(READ) Number of Reads: " << ++numReads);
+    LOG_INFO(m_logger, "(READ) Status is " << res1->status);
+    LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
+    LOG_INFO(m_logger, "(READ) Body is " << res1->body);
+    LOG_INFO(m_logger, "(READ) Number of Reads: " << ++numReads);
 
     if (res1->body.length() > 0) {
       strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
@@ -395,7 +397,7 @@ bool InternalCommandsHandler::executeReadCommand(
     }
   }
   ++m_readsCounter;
-  LOG_DEBUG(m_logger, "READ message handled; readsCounter=" << m_readsCounter);
+  LOG_INFO(m_logger, "READ message handled; readsCounter=" << m_readsCounter);
   return true;
 }
 

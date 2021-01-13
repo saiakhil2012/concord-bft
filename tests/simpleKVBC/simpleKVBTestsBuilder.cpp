@@ -142,25 +142,18 @@ void TestsBuilder::create(size_t numOfRequests, size_t seed) {
       ConcordAssert(0);
   }*/
 
-  //srand(seed);
+  srand(seed);
   for (size_t i = 0; i < numOfRequests; i++) {
     /*std::cout << "Running Statistics" << std::endl;
     std::cout << "Num of Write Requests: " << numWrites << std::endl;
     std::cout << "Num of Random Read Requests: " << numRandomReads << std::endl;
     std::cout << "Num of Known Read Requests: " << numKnownReads << std::endl;*/
     //int executionEngineID = (rand() % 20) + 1;
+    int eeId = rand() % 3;
     if (i < numOfRequests/2) {
-      if (i < numOfRequests/4) {
-        createAndInsertRandomConditionalWrite(0);
-      } else {
-        createAndInsertRandomConditionalWrite(0);
-      }
+      createAndInsertRandomConditionalWrite(eeId);
     } else {
-      if (i < (3*numOfRequests/4)) {
-        createAndInsertReadPreviouslyWrittenKey(0);
-      } else {
-        createAndInsertReadPreviouslyWrittenKey(0);
-      }
+      createAndInsertReadPreviouslyWrittenKey(eeId);
     }
   }
 
@@ -269,11 +262,7 @@ void TestsBuilder::createAndInsertRandomConditionalWrite(int executionId) {
     value = genRandomString(KV_LEN-1);
 
     //writtenKeyValueMap.insert(key, value);
-    if (executionId == 0) {
-      writtenKeyValueMap[key] = value;
-    } else {
-      writtenSecuredKeyValueMap[key] = value;
-    }
+    eeKVMaps[executionId][key] = value;
 
     //memcpy(writesKVArray[i].simpleKey.key, &key, sizeof(key));
     //memcpy(writesKVArray[i].simpleValue.value, &value, sizeof(value));
@@ -382,26 +371,13 @@ void TestsBuilder::createAndInsertReadPreviouslyWrittenKey(int executionId) {
   SimpleKey *requestKeys = request->keys;
   for (size_t i = 0; i < numberOfKeysToRead; i++) {
     std::string key = "";
-    if (executionId == 0) {
-      // For Normal EE
-      if (writtenKeyValueMap.size() > 0) {
-        auto it = writtenKeyValueMap.begin();
-        std::advance(it, rand() % writtenKeyValueMap.size());
+    if (eeKVMaps[executionId].size() > 0) {
+        auto it = eeKVMaps[executionId].begin();
+        std::advance(it, rand() % eeKVMaps[executionId].size());
         key = it->first;
-      } else {
-        //std::cout<<"Random Keys being generated for Reading" << std::endl;
-        key = genRandomString(KV_LEN-1);
-      }
     } else {
-      // For Secured EE
-      if (writtenSecuredKeyValueMap.size() > 0) {
-        auto it = writtenSecuredKeyValueMap.begin();
-        std::advance(it, rand() % writtenSecuredKeyValueMap.size());
-        key = it->first;
-      } else {
-        //std::cout<<"Random Keys being generated for Reading" << std::endl;
+        std::cout<<"Random Keys being generated for Reading" << std::endl;
         key = genRandomString(KV_LEN-1);
-      }
     }
     //memcpy(requestKeys[i].key, &key, sizeof(key));
     strcpy(requestKeys[i].key, key.c_str());
@@ -423,9 +399,9 @@ void TestsBuilder::createAndInsertReadPreviouslyWrittenKey(int executionId) {
     //std::cout<<"Previously Added Key is: " << requestKeys[i].key << std::endl;
     //std::cout<<"Value for above previosuly Added Key is: " << writtenKeyValueMap.find(key)->second.c_str() << std::endl;
     if (executionId == 0) {
-      strcpy(replyItems[i].simpleValue.value, writtenKeyValueMap.find(key)->second.c_str());
+      strcpy(replyItems[i].simpleValue.value, eeKVMaps[executionId].find(key)->second.c_str());
     } else {
-      strcpy(replyItems[i].simpleValue.value, writtenSecuredKeyValueMap.find(key)->second.c_str());
+      strcpy(replyItems[i].simpleValue.value, eeKVMaps[executionId].find(key)->second.c_str());
     }
     //std::cout<<"After writing, key: " << replyItems[i].simpleKey.key << std::endl;
     //std::cout<<"After writing, value: " << replyItems[i].simpleValue.value << std::endl;

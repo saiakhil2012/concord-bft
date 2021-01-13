@@ -98,8 +98,8 @@ class Controller {
 
     @PostMapping("/ee/secured/execute")
     String newSecuredKeyValue(@RequestBody String request) {
-        log.debug("Secured Post and now calling db");
-        log.debug("Request is " + request);
+        log.info("Secured Post and now calling db");
+        log.info("Request is " + request);
         try {
             StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
             encryptor.setPassword(seed);
@@ -111,10 +111,10 @@ class Controller {
                     if (reqObject.has("value")) {
                         //command = new Command(reqObject.getString("command"), reqObject.getString("key"),
                                 //encryptor.encrypt(reqObject.getString("value")));
-                        command = new Command(reqObject.getString("command"), encryptor.encrypt(reqObject.getString("key")),
+                        command = new Command(reqObject.getString("command"), (reqObject.getString("key")),
                                 encryptor.encrypt(reqObject.getString("value")));
                     } else {
-                        command = new Command(reqObject.getString("command"), encryptor.encrypt(reqObject.getString("key")), "");
+                        command = new Command(reqObject.getString("command"), (reqObject.getString("key")), "");
                     }
                 }
             }

@@ -332,6 +332,7 @@ class SimpleKeyBlockIdPair  // Represents <key, blockId>
 typedef std::map<SimpleKeyBlockIdPair, SimpleValue> KeyBlockIdToValueMap;
 typedef std::list<SimpleRequest*> RequestsList;
 typedef std::list<SimpleReply*> RepliesList;
+typedef std::map<std::string, std::string> stringKVMap;
 
 class TestsBuilder {
  public:
@@ -364,8 +365,10 @@ class TestsBuilder {
   RequestsList requests_;
   RepliesList replies_;
   std::map<concord::kvbc::BlockId, SimpleBlock*> internalBlockchain_;
-  std::map<std::string, std::string> writtenKeyValueMap;
-  std::map<std::string, std::string> writtenSecuredKeyValueMap;
+  //std::map<std::string, std::string> writtenKeyValueMap;
+  //std::map<std::string, std::string> writtenSecuredKeyValueMap;
+  //std::vector<stringKVMap> eeKVMaps;
+  std::map<int,std::map<std::string, std::string>> eeKVMaps;
   KeyBlockIdToValueMap allKeysToValueMap_;
   concord::kvbc::BlockId prevLastBlockId_ = 0;
   concord::kvbc::BlockId lastBlockId_ = 0;
