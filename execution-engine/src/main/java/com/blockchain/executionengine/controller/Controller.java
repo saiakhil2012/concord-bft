@@ -109,10 +109,12 @@ class Controller {
             if (reqObject.has("command")) {
                 if (reqObject.has("key")) {
                     if (reqObject.has("value")) {
-                        command = new Command(reqObject.getString("command"), reqObject.getString("key"),
+                        //command = new Command(reqObject.getString("command"), reqObject.getString("key"),
+                                //encryptor.encrypt(reqObject.getString("value")));
+                        command = new Command(reqObject.getString("command"), encryptor.encrypt(reqObject.getString("key")),
                                 encryptor.encrypt(reqObject.getString("value")));
                     } else {
-                        command = new Command(reqObject.getString("command"), reqObject.getString("key"), "");
+                        command = new Command(reqObject.getString("command"), encryptor.encrypt(reqObject.getString("key")), "");
                     }
                 }
             }
