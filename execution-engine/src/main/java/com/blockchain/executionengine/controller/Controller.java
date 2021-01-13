@@ -126,7 +126,9 @@ class Controller {
                 headers.setContentType(MediaType.APPLICATION_JSON);
 
                 HttpEntity<String> entity = new HttpEntity<String>(requestJson,headers);
-                return restTemplate.postForObject(dbUrl + "/key", entity, String.class);
+                String response = encryptor.decrypt(restTemplate.postForObject(dbUrl + "/key", entity, String.class));
+                log.info("Response is " + response);
+                return response;
             } else if (command.getCommandType().equals("add")) {
                 KeyValue keyValue = new KeyValue(command.getKey(), command.getValue());
                 String requestJson = g.toJson(keyValue);
