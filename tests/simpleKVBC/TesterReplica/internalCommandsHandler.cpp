@@ -148,7 +148,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
                                                   char *outReply,
                                                   uint32_t &outReplySize) {
   auto *writeReq = (SimpleCondWriteRequest *)request;
-  LOG_DEBUG(m_logger,
+  LOG_INFO(m_logger,
            "Execute WRITE command:"
                << ", executionEngineId=" << (int)writeReq->header.executionEngineId << " type=" << writeReq->header.type
                << " seqNum=" << sequenceNum << " numOfWrites=" << writeReq->numOfWrites
@@ -326,7 +326,7 @@ bool InternalCommandsHandler::executeGetBlockDataCommand(
 bool InternalCommandsHandler::executeReadCommand(
     uint32_t requestSize, const char *request, size_t maxReplySize, char *outReply, uint32_t &outReplySize) {
   auto *readReq = (SimpleReadRequest *)request;
-  LOG_DEBUG(m_logger,
+  LOG_INFO(m_logger,
            "Execute READ command: type=" << readReq->header.type << ", numberOfKeysToRead="
                                          << readReq->numberOfKeysToRead << ", readVersion=" << readReq->readVersion
                                          << ", executionEngineId=" << (int)readReq->header.executionEngineId);
