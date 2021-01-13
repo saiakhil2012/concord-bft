@@ -120,10 +120,13 @@ class Controller {
             }
             if (command.getCommandType().equals("get")) {
                 log.info("Key is " + command.getKey());
-                log.info("Encypted Key is " + encryptor.encrypt(command.getKey()));
-                String response = encryptor.decrypt(restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class));
-                log.debug("Response is " + response);
-                return response;
+                String key = command.getKey();
+                String requestJson = g.toJson(key);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                HttpEntity<String> entity = new HttpEntity<String>(requestJson,headers);
+                return restTemplate.postForObject(dbUrl + "/key", entity, String.class);
             } else if (command.getCommandType().equals("add")) {
                 KeyValue keyValue = new KeyValue(command.getKey(), command.getValue());
                 String requestJson = g.toJson(keyValue);

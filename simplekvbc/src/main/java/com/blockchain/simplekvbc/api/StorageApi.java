@@ -22,8 +22,17 @@ public class StorageApi {
         return ResponseEntity.ok(keyValue.getValue());
     }
 
-    @GetMapping("/db/{key}")
-    public ResponseEntity<String> find(@PathVariable("key") String key) {
+    // @GetMapping("/db/{key}")
+    // public ResponseEntity<String> find(@PathVariable("key") String key) {
+    //     log.debug("RocksApi.find " + key);
+    //     String result = rocksDB.find(key);
+    //     log.debug("Response is " + result);
+    //     if(result == null) return ResponseEntity.noContent().build();
+    //     return ResponseEntity.ok(result);
+    // }
+
+    @PostMapping("/db/key")
+    public ResponseEntity<String> find(@RequestBody String key) {
         log.debug("RocksApi.find " + key);
         String result = rocksDB.find(key);
         log.debug("Response is " + result);
