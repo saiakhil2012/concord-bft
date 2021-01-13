@@ -4,8 +4,7 @@ import lombok.*;
 
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
-public class Key {
+public class KeyObject {
     private String key;
 }

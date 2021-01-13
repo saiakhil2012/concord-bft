@@ -1,7 +1,7 @@
 package com.blockchain.simplekvbc.api;
 
 import com.blockchain.simplekvbc.store.KeyValue;
-import com.blockchain.simplekvbc.store.Key;
+import com.blockchain.simplekvbc.store.KeyObject;
 import com.blockchain.simplekvbc.repository.LedgerRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -33,9 +33,9 @@ public class StorageApi {
     // }
 
     @PostMapping("/db/key")
-    public ResponseEntity<String> find(@RequestBody Key key) {
-        log.info("RocksApi.find " + key.getKey());
-        String result = rocksDB.find(key.getKey());
+    public ResponseEntity<String> find(@RequestBody KeyObject keyObject) {
+        log.info("RocksApi.find " + keyObject.getKey());
+        String result = rocksDB.find(keyObject.getKey());
         log.info("Response is " + result);
         if(result == null) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(result);
