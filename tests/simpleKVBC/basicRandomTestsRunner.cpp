@@ -50,7 +50,7 @@ void BasicRandomTestsRunner::run() {
   int ops = 0;
   clock_t begin = clock();
   while (!requests.empty()) {
-    //sleep(ops);
+    sleep(ops);
     SimpleRequest *request = requests.front();
     SimpleReply *expectedReply = expectedReplies.front();
     requests.pop_front();

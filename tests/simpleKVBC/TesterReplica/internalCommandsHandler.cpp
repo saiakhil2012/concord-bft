@@ -198,6 +198,8 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
         }
       }
 
+      LOG_INFO(m_logger, "(WRITE) Base URL is " << base_url);
+
       auto res1 = cli.Post(&base_url[0], buffer.str(), "application/json");
       LOG_DEBUG(m_logger, "(WRITE) Status is " << res1->status);
       LOG_DEBUG(m_logger, "(WRITE) Body is " << res1->body);
@@ -383,7 +385,7 @@ bool InternalCommandsHandler::executeReadCommand(
         base_url.assign(SECURED_URL);
       }
     }
-
+    LOG_INFO(m_logger, "(READ) Base URL is " << base_url);
     auto res1 = cli.Post(&base_url[0], buffer.str(), "application/json");
     LOG_INFO(m_logger, "(READ) Status is " << res1->status);
     LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
