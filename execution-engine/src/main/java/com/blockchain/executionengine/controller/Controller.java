@@ -2,6 +2,7 @@ package com.blockchain.executionengine.controller;
 
 import com.blockchain.executionengine.command.Command;
 import com.blockchain.executionengine.store.KeyValue;
+import com.blockchain.executionengine.store.Key;
 import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -119,8 +120,9 @@ class Controller {
                 }
             }
             if (command.getCommandType().equals("get")) {
+                log.info("Key before encryption is " + encryptor.decrypt(command.getKey()));
                 log.info("Key is " + command.getKey());
-                String key = command.getKey();
+                Key key = new Key(command.getKey());
                 String requestJson = g.toJson(key);
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
@@ -130,8 +132,10 @@ class Controller {
                 log.info("Response is " + response);
                 return response;
             } else if (command.getCommandType().equals("add")) {
+                log.info("Key after encrypt is " + command.getKey());
                 KeyValue keyValue = new KeyValue(command.getKey(), command.getValue());
                 String requestJson = g.toJson(keyValue);
+                log.info("Request JSON to SKVBC is " + requestJson);
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
 
