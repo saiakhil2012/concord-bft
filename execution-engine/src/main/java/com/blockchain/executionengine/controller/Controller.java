@@ -101,8 +101,8 @@ class Controller {
 
     @PostMapping("/ee/secured/execute")
     String newSecuredKeyValue(@RequestBody String request) {
-        log.debug("Secured Post and now calling db");
-        log.debug("Request is " + request);
+        log.info("Secured Post and now calling db");
+        log.info("Request is " + request);
         try {
             StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
             encryptor.setPassword(seed);
@@ -122,26 +122,26 @@ class Controller {
                 }
             }
             if (command.getCommandType().equals("get")) {
-                log.debug("Key is " + command.getKey());
+                log.info("Key is " + command.getKey());
                 String encryptedKey = keyToEncryptedKey.get(command.getKey());
-                log.debug("Key was encrypted as " + encryptedKey);
+                log.info("Key was encrypted as " + encryptedKey);
                 KeyObject key = new KeyObject(encryptedKey);
                 String requestJson = g.toJson(key);
-                log.debug("Request JSON to SKVBC is " + requestJson);
+                log.info("Request JSON to SKVBC is " + requestJson);
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
 
                 HttpEntity<String> entity = new HttpEntity<String>(requestJson,headers);
                 String response = encryptor.decrypt(restTemplate.postForObject(dbUrl + "/key", entity, String.class));
-                log.debug("Response is " + response);
+                log.info("Response is " + response);
                 return response;
             } else if (command.getCommandType().equals("add")) {
-                log.debug("Key after encrypt is " + command.getKey());
+                log.info("Key after encrypt is " + command.getKey());
                 // Storing Key --> Encrypted Key in the Map
                 keyToEncryptedKey.put(encryptor.decrypt(command.getKey()), command.getKey());
                 KeyValue keyValue = new KeyValue(command.getKey(), command.getValue());
                 String requestJson = g.toJson(keyValue);
-                log.debug("Request JSON to SKVBC is " + requestJson);
+                log.info("Request JSON to SKVBC is " + requestJson);
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
 

@@ -18,7 +18,7 @@ public class StorageApi {
 
     @PostMapping("/db/kv")
     public ResponseEntity<String> save(@RequestBody KeyValue keyValue) {
-        log.debug("RocksApi.save " + keyValue.getKey() + " : " + keyValue.getValue());
+        log.info("RocksApi.save " + keyValue.getKey() + " : " + keyValue.getValue());
         rocksDB.save(keyValue.getKey(), keyValue.getValue());
         return ResponseEntity.ok(keyValue.getValue());
     }
@@ -34,16 +34,16 @@ public class StorageApi {
 
     @PostMapping("/db/key")
     public ResponseEntity<String> find(@RequestBody KeyObject keyObject) {
-        log.debug("RocksApi.find " + keyObject.getKey());
+        log.info("RocksApi.find " + keyObject.getKey());
         String result = rocksDB.find(keyObject.getKey());
-        log.debug("Response is " + result);
+        log.info("Response is " + result);
         if(result == null) return ResponseEntity.noContent().build();
         return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/db/{key}")
     public ResponseEntity<String> delete(@PathVariable("key") String key) {
-        log.debug("RocksApi.delete " + key);
+        log.info("RocksApi.delete " + key);
         rocksDB.delete(key);
         return ResponseEntity.ok(key);
     }
