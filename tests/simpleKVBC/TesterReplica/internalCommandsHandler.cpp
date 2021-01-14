@@ -174,7 +174,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
       std::string v1(keyValArray[i].simpleValue.value);
 
       LOG_DEBUG(m_logger, "PORT is " << 8090 + (int)writeReq->header.executionEngineId);
-      LOG_INFO(m_logger, "(WRITE) Key is " << k1);
+      LOG_DEBUG(m_logger, "(WRITE) Key is " << k1);
       LOG_DEBUG(m_logger, "(WRITE) Value is " << v1);
 
       json body;
@@ -328,7 +328,7 @@ bool InternalCommandsHandler::executeGetBlockDataCommand(
 bool InternalCommandsHandler::executeReadCommand(
     uint32_t requestSize, const char *request, size_t maxReplySize, char *outReply, uint32_t &outReplySize) {
   auto *readReq = (SimpleReadRequest *)request;
-  LOG_INFO(m_logger,
+  LOG_DEBUG(m_logger,
            "Execute READ command: type=" << readReq->header.type << ", numberOfKeysToRead="
                                          << readReq->numberOfKeysToRead << ", readVersion=" << readReq->readVersion
                                          << ", executionEngineId=" << (int)readReq->header.executionEngineId);
@@ -365,7 +365,7 @@ bool InternalCommandsHandler::executeReadCommand(
     std::string k1(replyItems[i].simpleKey.key);
 
     LOG_DEBUG(m_logger, "PORT is " << 8090 + (int)readReq->header.executionEngineId);
-    LOG_INFO(m_logger, "(READ) Key is " << k1);
+    LOG_DEBUG(m_logger, "(READ) Key is " << k1);
     LOG_DEBUG(m_logger, "(READ) Size of Key is " << k1.length());
 
     json body;
@@ -399,7 +399,7 @@ bool InternalCommandsHandler::executeReadCommand(
     }
   }
   ++m_readsCounter;
-  LOG_INFO(m_logger, "READ message handled; readsCounter=" << m_readsCounter);
+  LOG_DEBUG(m_logger, "READ message handled; readsCounter=" << m_readsCounter);
   return true;
 }
 
