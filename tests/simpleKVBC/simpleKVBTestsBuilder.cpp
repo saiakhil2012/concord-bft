@@ -150,6 +150,7 @@ void TestsBuilder::create(size_t numOfRequests, size_t seed) {
     std::cout << "Num of Known Read Requests: " << numKnownReads << std::endl;*/
     //int executionEngineID = (rand() % 20) + 1;
     int eeId = rand() % 9;
+    eeId = 0;
     if (i < numOfRequests/2) {
       createAndInsertRandomConditionalWrite(eeId);
     } else {
