@@ -148,7 +148,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
                                                   char *outReply,
                                                   uint32_t &outReplySize) {
   auto *writeReq = (SimpleCondWriteRequest *)request;
-  LOG_INFO(m_logger,
+  LOG_DEBUG(m_logger,
            "Execute WRITE command:"
                << ", executionEngineId=" << (int)writeReq->header.executionEngineId << " type=" << writeReq->header.type
                << " seqNum=" << sequenceNum << " numOfWrites=" << writeReq->numOfWrites
@@ -173,9 +173,9 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
       std::string k1(keyValArray[i].simpleKey.key);
       std::string v1(keyValArray[i].simpleValue.value);
 
-      LOG_INFO(m_logger, "PORT is " << 8090 + (int)writeReq->header.executionEngineId);
+      LOG_DEBUG(m_logger, "PORT is " << 8090 + (int)writeReq->header.executionEngineId);
       LOG_INFO(m_logger, "(WRITE) Key is " << k1);
-      LOG_INFO(m_logger, "(WRITE) Value is " << v1);
+      LOG_DEBUG(m_logger, "(WRITE) Value is " << v1);
 
       json body;
       body["command"] = "add";
@@ -185,7 +185,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
       std::stringstream buffer;
       buffer << body << std::endl;
 
-      LOG_INFO(m_logger, "(WRITE) JSON object is " << buffer.str());
+      LOG_DEBUG(m_logger, "(WRITE) JSON object is " << buffer.str());
 
       std::string base_url;
       if (isSecure) {
@@ -198,7 +198,7 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
         }
       }
 
-      LOG_INFO(m_logger, "(WRITE) Base URL is " << base_url);
+      LOG_DEBUG(m_logger, "(WRITE) Base URL is " << base_url);
 
       auto res1 = cli.Post(&base_url[0], buffer.str(), "application/json");
       LOG_DEBUG(m_logger, "(WRITE) Status is " << res1->status);
@@ -361,12 +361,12 @@ bool InternalCommandsHandler::executeReadCommand(
   for (size_t i = 0; i < numOfItems; i++) {
     memcpy(replyItems[i].simpleKey.key, readKeys[i].key, KV_LEN);
     
-    LOG_INFO(m_logger, "(READ) i num Read Item is: " << i);
+    LOG_DEBUG(m_logger, "(READ) i num Read Item is: " << i);
     std::string k1(replyItems[i].simpleKey.key);
 
-    LOG_INFO(m_logger, "PORT is " << 8090 + (int)readReq->header.executionEngineId);
+    LOG_DEBUG(m_logger, "PORT is " << 8090 + (int)readReq->header.executionEngineId);
     LOG_INFO(m_logger, "(READ) Key is " << k1);
-    LOG_INFO(m_logger, "(READ) Size of Key is " << k1.length());
+    LOG_DEBUG(m_logger, "(READ) Size of Key is " << k1.length());
 
     json body;
     body["command"] = "get";
@@ -385,12 +385,12 @@ bool InternalCommandsHandler::executeReadCommand(
         base_url.assign(SECURED_URL);
       }
     }
-    LOG_INFO(m_logger, "(READ) Base URL is " << base_url);
+    LOG_DEBUG(m_logger, "(READ) Base URL is " << base_url);
     auto res1 = cli.Post(&base_url[0], buffer.str(), "application/json");
-    LOG_INFO(m_logger, "(READ) Status is " << res1->status);
-    LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
-    LOG_INFO(m_logger, "(READ) Body is " << res1->body);
-    LOG_INFO(m_logger, "(READ) Number of Reads: " << ++numReads);
+    LOG_DEBUG(m_logger, "(READ) Status is " << res1->status);
+    LOG_DEBUG(m_logger, "(READ) Size of Body is " << res1->body.length());
+    LOG_DEBUG(m_logger, "(READ) Body is " << res1->body);
+    LOG_DEBUG(m_logger, "(READ) Number of Reads: " << ++numReads);
 
     if (res1->body.length() > 0) {
       strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
