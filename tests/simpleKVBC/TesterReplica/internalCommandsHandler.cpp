@@ -38,7 +38,7 @@ using concord::storage::SetOfKeyValuePairs;
 //const uint64_t LONG_EXEC_CMD_TIME_IN_SEC = 11;
 
 const std::string NORMAL_URL = "/ee/execute";
-const std::string SECURED_URL = "/ee/secured/execute";
+const std::string SECURED_URL = "/ee/execute";
 
 int InternalCommandsHandler::execute(uint16_t clientId,
                                      uint64_t sequenceNum,
