@@ -59,12 +59,14 @@ class Controller {
         log.debug("Post and now calling db");
         log.debug("Request is " + request);
         try {
+            StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+            encryptor.setPassword(seed);
             Command command = new Command();
             JSONObject reqObject = new JSONObject(request);
             if (reqObject.has("command")) {
                 if (reqObject.has("key")) {
                     if (reqObject.has("value")) {
-                        command = new Command(reqObject.getString("command"), reqObject.getString("key"), reqObject.getString("value"));
+                        command = new Command(reqObject.getString("command"), reqObject.getString("key"), encryptor.encrypt(reqObject.getString("value")));
                     } else {
                         command = new Command(reqObject.getString("command"), reqObject.getString("key"), "");
                     }
@@ -72,7 +74,7 @@ class Controller {
             }
             if (command.getCommandType().equals("get")) {
                 log.debug("Key is " + command.getKey());
-                String response = restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class);
+                String response = encryptor.decrypt(restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class));
                 log.debug("Response is " + response);
                 return response;
             } else if (command.getCommandType().equals("add")) {
