@@ -128,6 +128,8 @@ void TestsBuilder::create(size_t numOfRequests, size_t seed) {
   srand(seed);
   for (size_t i = 0; i < numOfRequests; i++) {
     int percent = rand() % 100 + 1;
+    //int percent = 60;
+    cout << "******* Percent is " << percent << " ********";
     if (percent <= 50)
       createAndInsertRandomRead();
     else if (percent <= 95)
@@ -216,24 +218,30 @@ void TestsBuilder::createAndInsertRandomConditionalWrite() {
   SimpleKV *writesKVArray = request->keyValueArray();
 
   for (size_t i = 0; i < numOfKeysInReadSet; i++) {
-    size_t key = 0;
-    do {
-      key = rand() % NUMBER_OF_KEYS;
-    } while (key == concord::kvbc::IBlockMetadata::kBlockMetadataKey);
-    memcpy(readKeysArray[i].key, &key, sizeof(key));
+    std::string key = "";
+    key = genRandomString(KV_LEN-1);
+    //memcpy(readKeysArray[i].key, &key, sizeof(key));
+    strcpy(readKeysArray[i].key, key.c_str());
+    //key.copy(readKeysArray[i].key, KV_LEN);
   }
 
-  std::set<size_t> usedKeys;
+  std::set<std::string> usedKeys;
   for (size_t i = 0; i < numOfWrites; i++) {
-    size_t key = 0;
-    do {  // Avoid duplications
-      key = rand() % NUMBER_OF_KEYS;
-    } while (usedKeys.count(key) > 0 || key == concord::kvbc::IBlockMetadata::kBlockMetadataKey);
+    std::string key = "";
+    do {
+      key = genRandomString(KV_LEN-1);
+    } while (usedKeys.count(key) > 0);
     usedKeys.insert(key);
 
-    size_t value = rand();
-    memcpy(writesKVArray[i].simpleKey.key, &key, sizeof(key));
-    memcpy(writesKVArray[i].simpleValue.value, &value, sizeof(value));
+    std::string value = "";
+    value = genRandomString(KV_LEN-1);
+
+    //memcpy(writesKVArray[i].simpleKey.key, &key, sizeof(key));
+    //memcpy(writesKVArray[i].simpleValue.value, &value, sizeof(value));
+    strcpy(writesKVArray[i].simpleKey.key, key.c_str());
+    strcpy(writesKVArray[i].simpleValue.value, value.c_str());
+    //key.copy(writesKVArray[i].simpleKey.key, KV_LEN);
+    //value.copy(writesKVArray[i].simpleValue.value, KV_LEN);
   }
 
   // Add request to m_requests
@@ -248,6 +256,16 @@ void TestsBuilder::createAndInsertRandomConditionalWrite() {
   if (!foundConflict) {
     addNewBlock(request->numOfWrites, writesKVArray);
   }
+}
+
+std::string TestsBuilder::genRandomString(int n) {
+  char options[26] = {'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
+  std::string randStr = "";
+  for (int i = 0; i < n; i++) {
+      randStr = randStr + options[rand() % 26];
+  }
+  std::cout << randStr << endl;
+  return randStr;
 }
 
 void TestsBuilder::createAndInsertRandomRead() {
@@ -267,11 +285,12 @@ void TestsBuilder::createAndInsertRandomRead() {
 
   SimpleKey *requestKeys = request->keys;
   for (size_t i = 0; i < numberOfKeysToRead; i++) {
-    size_t key = 0;
-    do {
-      key = rand() % NUMBER_OF_KEYS;
-    } while (key == concord::kvbc::IBlockMetadata::kBlockMetadataKey);
-    memcpy(requestKeys[i].key, &key, sizeof(key));
+    std::string key = "";
+    key = genRandomString(KV_LEN-1);
+    std::cout << "Random Read Key" << key << endl;
+    //memcpy(requestKeys[i].key, &key, sizeof(key));
+    strcpy(requestKeys[i].key, key.c_str());
+    //key.copy(requestKeys[i].key, KV_LEN);
   }
 
   // Add request to m_requests

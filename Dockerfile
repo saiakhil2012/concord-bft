@@ -30,3 +30,10 @@ path-exclude /usr/share/linda/*' > /etc/dpkg/dpkg.cfg.d/01_nodoc && \
             python3-pip \
             python3-setuptools \
             wget
+
+RUN sudo apt-get update
+RUN sudo apt-get install default-jdk
+RUN sudo apt install maven
+
+# Debugging helper tool
+RUN sudo apt install curl

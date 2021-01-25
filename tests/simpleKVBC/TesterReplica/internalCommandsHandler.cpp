@@ -17,11 +17,16 @@
 #include "sliver.hpp"
 #include "kv_types.hpp"
 #include "block_metadata.hpp"
+#include "httplib.h"
+#include <jsoncons/json.hpp>
 #include <unistd.h>
 #include <algorithm>
 
 using namespace BasicRandomTests;
 using namespace bftEngine;
+using namespace httplib;
+using namespace std;
+using namespace jsoncons;
 
 using concordUtils::Status;
 using concordUtils::Sliver;
@@ -147,6 +152,44 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
                << " READ_ONLY_FLAG=" << ((flags & MsgFlag::READ_ONLY_FLAG) != 0 ? "true" : "false")
                << " PRE_PROCESS_FLAG=" << ((flags & MsgFlag::PRE_PROCESS_FLAG) != 0 ? "true" : "false")
                << " HAS_PRE_PROCESSED_FLAG=" << ((flags & MsgFlag::HAS_PRE_PROCESSED_FLAG) != 0 ? "true" : "false"));
+
+  LOG_INFO(m_logger, "Caling a GET on Execution Engine");
+  Client cli("172.17.0.1", 8080);
+
+  auto res = cli.Get("/test");
+  LOG_INFO(m_logger, "Test Status is " << res->status);
+  LOG_INFO(m_logger, "Test Body is " << res->body);
+
+  std::cout << "(WRITE) Key: " << std::string(writeReq->keyValueArray()->simpleKey.key);
+  std::string k1(writeReq->keyValueArray()->simpleKey.key);
+  std::string v1(writeReq->keyValueArray()->simpleValue.value);
+
+  LOG_INFO(m_logger, "(WRITE) Key is " << k1);
+  /*for (size_t i = 0; i < k1.size(); ++i)
+  {
+    std::cout << i << " " << std::hex << static_cast<int>(static_cast<uint8_t>(k1.at(i))) << std::endl;
+  }*/
+
+  LOG_INFO(m_logger, "(WRITE) Value is " << v1);
+  /*for (size_t i = 0; i < v1.size(); ++i)
+  {
+    std::cout << i << " " << std::hex << static_cast<int>(static_cast<uint8_t>(v1.at(i))) << std::endl;
+  }*/
+
+  json body;
+  body["command"] = "add";
+  body["key"] = k1;
+  body["value"] = v1;
+
+  std::stringstream buffer;
+  buffer << body << std::endl;
+
+  LOG_INFO(m_logger, "(WRITE) JSON object is " << buffer.str());
+
+  auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
+  LOG_INFO(m_logger, "(WRITE) Status is " << res1->status);
+  LOG_INFO(m_logger, "(WRITE) Body is " << res1->body);
+
 
   if (writeReq->header.type == WEDGE) {
     LOG_INFO(m_logger, "A wedge command has been called" << KVLOG(sequenceNum));
@@ -287,23 +330,47 @@ bool InternalCommandsHandler::executeReadCommand(
   reply->header.type = READ;
   reply->numOfItems = numOfItems;
 
+  LOG_INFO(m_logger, "Caling a GET on Execution Engine");
+  Client cli("172.17.0.1", 8080);
+
   SimpleKey *readKeys = readReq->keys;
   SimpleKV *replyItems = reply->items;
   for (size_t i = 0; i < numOfItems; i++) {
-    memcpy(replyItems->simpleKey.key, readKeys->key, KV_LEN);
-    Sliver value;
+    memcpy(replyItems[i].simpleKey.key, readKeys[i].key, KV_LEN);
+    
+    LOG_INFO(m_logger, "(READ) i num Read Item is: " << i);
+    std::cout << "(READ) Key: " << std::string(replyItems[i].simpleKey.key, KV_LEN) << std::endl;
+    std::string k1(replyItems[i].simpleKey.key, KV_LEN);
+    std::cout << "(READ) Size of Key: " << k1.length() << std::endl;
+
+    LOG_INFO(m_logger, "(READ) Key is " << k1);
+
+    json body;
+    body["command"] = "get";
+    body["key"] = k1;
+
+    std::stringstream buffer;
+    buffer << body << std::endl;
+    auto res1 = cli.Post("/ee/execute", buffer.str(), "application/json");
+    LOG_INFO(m_logger, "(READ) Status is " << res1->status);
+    LOG_INFO(m_logger, "(READ) Size of Body is " << res1->body.length());
+    LOG_INFO(m_logger, "(READ) Body is " << res1->body);
+
+    /*Sliver value;
     BlockId outBlock = 0;
-    if (!m_storage->get(readReq->readVersion, buildSliverFromStaticBuf(readKeys->key), value, outBlock).isOK()) {
+    if (!m_storage->get(readReq->readVersion, buildSliverFromStaticBuf(readKeys[i].key), value, outBlock).isOK()) {
       LOG_ERROR(m_logger, "Read: Failed to get keys for readVersion = %" << readReq->readVersion);
       return false;
-    }
+    }*/
 
-    if (value.length() > 0)
-      memcpy(replyItems->simpleValue.value, value.data(), KV_LEN);
-    else
-      memset(replyItems->simpleValue.value, 0, KV_LEN);
-    ++readKeys;
-    ++replyItems;
+    if (res1->body.length() > 0) {
+      //memcpy(replyItems->simpleValue.value, res1->body, KV_LEN);
+      strcpy(replyItems[i].simpleValue.value, res1->body.c_str());
+    } else {
+      memset(replyItems[i].simpleValue.value, 0, KV_LEN);
+    }
+    //++readKeys;
+    //++replyItems;
   }
   ++m_readsCounter;
   LOG_INFO(m_logger, "READ message handled; readsCounter=" << m_readsCounter);
