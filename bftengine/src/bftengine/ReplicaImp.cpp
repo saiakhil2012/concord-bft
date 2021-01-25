@@ -493,7 +493,7 @@ void ReplicaImp::startConsensusProcess(PrePrepareMsg *pp, bool isInternalNoop) {
   if (isInternalNoop) {
     LOG_INFO(CNSUS, "Sending PrePrepare containing internal NOOP");
   } else {
-    LOG_INFO(CNSUS,
+    LOG_DEBUG(CNSUS,
              "Sending PrePrepare with the following payload of the following correlation ids ["
                  << pp->getBatchCorrelationIdAsString() << "]");
     consensus_times_.start(primaryLastUsedSeqNum);
@@ -668,7 +668,7 @@ void ReplicaImp::onMessage<PrePrepareMsg>(PrePrepareMsg *msg) {
       if (isNoop) {
         LOG_INFO(CNSUS, "Internal NOOP PrePrepare received");
       } else {
-        LOG_INFO(CNSUS,
+        LOG_DEBUG(CNSUS,
                  "PrePrepare with the following correlation IDs [" << msg->getBatchCorrelationIdAsString() << "]");
       }
       msgAdded = true;
@@ -1598,10 +1598,10 @@ void ReplicaImp::onMessage<CheckpointMsg>(CheckpointMsg *msg) {
   const Digest msgDigest = msg->digestOfState();
   const bool msgIsStable = msg->isStableState();
   SCOPED_MDC_SEQ_NUM(std::to_string(msgSeqNum));
-  LOG_INFO(
+  LOG_DEBUG(
       GL,
       "Received checkpoint message from node. " << KVLOG(msgSenderId, msgSeqNum, msg->size(), msgIsStable, msgDigest));
-  LOG_INFO(GL, "My " << KVLOG(lastStableSeqNum, lastExecutedSeqNum));
+  LOG_DEBUG(GL, "My " << KVLOG(lastStableSeqNum, lastExecutedSeqNum));
   auto span = concordUtils::startChildSpanFromContext(msg->spanContext<std::remove_pointer<decltype(msg)>::type>(),
                                                       "bft_handle_checkpoint_msg");
 

@@ -155,7 +155,7 @@ class SimpleKVBCProtocol:
             return dict([(k, all_zeros) for k in self.keys])
 
     def random_value(self):
-        return bytes(random.sample(self.alphanum, self.KV_LEN))
+        return bytes(random.sample(self.alphanum, self.KV_LEN), 'UTF-8')
 
     def random_values(self, n):
         return [self.random_value() for _ in range(0, n)]
@@ -342,7 +342,7 @@ class SimpleKVBCProtocol:
                 key = copy.deepcopy(cur)
                 # Extend the key to be KV_LEN bytes
                 key.extend([ord('.') for _ in range(self.KV_LEN - len(cur))])
-                keys.append(bytes(key))
+                keys.append(bytes(key), 'UTF-8')
 
             return keys
 

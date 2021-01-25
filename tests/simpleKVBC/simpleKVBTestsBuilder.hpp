@@ -182,9 +182,9 @@ struct SimpleReply_ConditionalWrite {
   bool isEquiv(SimpleReply_ConditionalWrite& other, std::ostringstream& error) {
     if (header.type != other.header.type) {
       error << "*** Write: Wrong message type: " << other.header.type;
-    } else if (latestBlock != other.latestBlock) {
+    } /*else if (latestBlock != other.latestBlock) {
       error << "*** Write: Wrong latestBlock: " << other.latestBlock << ", expected: " << latestBlock;
-    } else if (success != other.success) {
+    }*/ else if (success != other.success) {
       error << "*** Write: Wrong result: " << other.success;
     } else {
       return true;
@@ -230,8 +230,10 @@ struct SimpleReply_Read {
         error << "*** READ: Key for item number " << i << " is wrong";
         return false;
       }
-      if (memcmp(itemPtr->simpleValue.value, otherItemPtr->simpleValue.value, sizeof(itemPtr->simpleValue.value)) !=
-          0) {
+      if (memcmp(itemPtr->simpleValue.value, otherItemPtr->simpleValue.value, sizeof(otherItemPtr->simpleValue.value)) != 0) {
+        std::cout << "--- Key: " << itemPtr->simpleValue.value << std::endl;
+        std::cout << "--- Expected Value: " << itemPtr->simpleValue.value << std::endl;
+        std::cout << "--- Received Value: " << otherItemPtr->simpleValue.value << std::endl;
         error << "*** READ: Value for item number " << i << " is wrong";
         return false;
       }
@@ -345,7 +347,9 @@ class TestsBuilder {
 
  private:
   void create(size_t numOfRequests, size_t seed);
+  std::string genRandomString(int n);
   void createAndInsertRandomConditionalWrite();
+  void createAndInsertReadPreviouslyWrittenKey();
   void createAndInsertRandomRead();
   void createAndInsertGetLastBlock();
   void addExpectedWriteReply(bool foundConflict);
@@ -360,9 +364,13 @@ class TestsBuilder {
   RequestsList requests_;
   RepliesList replies_;
   std::map<concord::kvbc::BlockId, SimpleBlock*> internalBlockchain_;
+  std::map<std::string, std::string> writtenKeyValueMap;
   KeyBlockIdToValueMap allKeysToValueMap_;
   concord::kvbc::BlockId prevLastBlockId_ = 0;
   concord::kvbc::BlockId lastBlockId_ = 0;
+  int numWrites = 0;
+  int numRandomReads = 0;
+  int numKnownReads = 0;
 };
 
 }  // namespace BasicRandomTests
