@@ -25,13 +25,6 @@ import java.util.HashMap;
 @Slf4j
 @RestController
 class Controller {
-
-//    private final EmployeeRepository repository;
-//
-//    EmployeeController(EmployeeRepository repository) {
-//        this.repository = repository;
-//    }
-
     Gson g = new Gson();
     RestTemplate restTemplate = new RestTemplate();
     String dbUrl = "http://172.17.0.1:9090/db";
@@ -112,8 +105,6 @@ class Controller {
             if (reqObject.has("command")) {
                 if (reqObject.has("key")) {
                     if (reqObject.has("value")) {
-                        //command = new Command(reqObject.getString("command"), reqObject.getString("key"),
-                                //encryptor.encrypt(reqObject.getString("value")));
                         command = new Command(reqObject.getString("command"), encryptor.encrypt(reqObject.getString("key")),
                                 encryptor.encrypt(reqObject.getString("value")));
                     } else {

@@ -160,10 +160,6 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
   LOG_DEBUG(m_logger, "Caling a GET on Execution Engine");
   Client cli("172.17.0.1", 8090 + (int)writeReq->header.executionEngineId);
 
-  /*auto res = cli.Get("/test");
-  LOG_DEBUG(m_logger, "Test Status is " << res->status);
-  LOG_DEBUG(m_logger, "Test Body is " << res->body);*/
-
   bool wroteKVSuccessfully = true;
   for (size_t i = 0; i < writeReq->numOfWrites; i++) {
       SimpleKV *keyValArray = writeReq->keyValueArray();
@@ -209,65 +205,10 @@ bool InternalCommandsHandler::executeWriteCommand(uint32_t requestSize,
         wroteKVSuccessfully = false;
       }
   }
-
-
-  /*if (writeReq->header.type == WEDGE) {
-    LOG_DEBUG(m_logger, "A wedge command has been called" << KVLOG(sequenceNum));
-    controlStateManager_->setStopAtNextCheckpoint(sequenceNum);
-  }
-  if (writeReq->header.type == ADD_REMOVE_NODE) {
-    LOG_DEBUG(m_logger, "An add_remove_node command has been called" << KVLOG(sequenceNum));
-    controlStateManager_->setStopAtNextCheckpoint(sequenceNum);
-    controlStateManager_->setEraseMetadataFlag(sequenceNum);
-  }
-
-  if (!(flags & MsgFlag::HAS_PRE_PROCESSED_FLAG)) {
-    bool result = verifyWriteCommand(requestSize, *writeReq, maxReplySize, outReplySize);
-    if (!result) ConcordAssert(0);
-    if (flags & MsgFlag::PRE_PROCESS_FLAG) {
-      if (writeReq->header.type == LONG_EXEC_COND_WRITE) sleep(LONG_EXEC_CMD_TIME_IN_SEC);
-      outReplySize = requestSize;
-      memcpy(outReply, request, requestSize);
-      return result;
-    }
-  }
-
-  SimpleKey *readSetArray = writeReq->readSetArray();
-  BlockId currBlock = m_storage->getLastBlock();
-
-  // Look for conflicts
-  bool hasConflict = false;
-  for (size_t i = 0; !hasConflict && i < writeReq->numOfKeysInReadSet; i++) {
-    m_storage->mayHaveConflictBetween(
-        buildSliverFromStaticBuf(readSetArray[i].key), writeReq->readVersion + 1, currBlock, hasConflict);
-  }
-
-  if (!hasConflict) {
-    SimpleKV *keyValArray = writeReq->keyValueArray();
-    SetOfKeyValuePairs updates;
-    for (size_t i = 0; i < writeReq->numOfWrites; i++) {
-      KeyValuePair keyValue(buildSliverFromStaticBuf(keyValArray[i].simpleKey.key),
-                            buildSliverFromStaticBuf(keyValArray[i].simpleValue.value));
-      updates.insert(keyValue);
-    }
-    addMetadataKeyValue(updates, sequenceNum);
-    BlockId newBlockId = 0;
-    Status addSuccess = m_blocksAppender->addBlock(updates, newBlockId);
-    ConcordAssert(addSuccess.isOK());
-    ConcordAssert(newBlockId == currBlock + 1);
-  }
-
-  ConcordAssert(sizeof(SimpleReply_ConditionalWrite) <= maxReplySize);*/
-  
-  
   
   auto *reply = (SimpleReply_ConditionalWrite *)outReply;
   reply->header.type = COND_WRITE;
   reply->success = wroteKVSuccessfully;
-  /*if (wroteKVSuccessfully)
-    reply->latestBlock = currBlock + 1;
-  else
-    reply->latestBlock = currBlock;*/
 
   outReplySize = sizeof(SimpleReply_ConditionalWrite);
   ++m_writesCounter;

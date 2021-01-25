@@ -125,30 +125,9 @@ void TestsBuilder::createRandomTest(size_t numOfRequests, size_t seed) {
 }
 
 void TestsBuilder::create(size_t numOfRequests, size_t seed) {
-  /*srand(seed);
-  for (size_t i = 0; i < numOfRequests; i++) {
-    std::cout << "Running Statistics" << std::endl;
-    std::cout << "Num of Writes: " << numWrites << std::endl;
-    std::cout << "Num of Random Reads: " << numRandomReads << std::endl;
-    std::cout << "Num of Known Reads: " << numKnownReads << std::endl;
-    int percent = rand() % 100 + 1;
-    //int percent = 60;
-    cout << "******* Percent is " << percent << " ********" << endl;
-    if (percent <= 50)
-      createAndInsertReadPreviouslyWrittenKey();
-    else if (percent <= 100)
-      createAndInsertRandomConditionalWrite();
-    else
-      ConcordAssert(0);
-  }*/
 
   srand(seed);
   for (size_t i = 0; i < numOfRequests; i++) {
-    /*std::cout << "Running Statistics" << std::endl;
-    std::cout << "Num of Write Requests: " << numWrites << std::endl;
-    std::cout << "Num of Random Read Requests: " << numRandomReads << std::endl;
-    std::cout << "Num of Known Read Requests: " << numKnownReads << std::endl;*/
-    //int executionEngineID = (rand() % 20) + 1;
     int eeId = rand() % 9;
     if (i < numOfRequests/2) {
       createAndInsertRandomConditionalWrite(eeId);
@@ -156,11 +135,6 @@ void TestsBuilder::create(size_t numOfRequests, size_t seed) {
       createAndInsertReadPreviouslyWrittenKey(eeId);
     }
   }
-
-  /*std::cout << "Final Statistics" << std::endl;
-  std::cout << "Num of Writes Requests: " << numWrites << std::endl;
-  std::cout << "Num of Random Read Requests: " << numRandomReads << std::endl;
-  std::cout << "Num of Known Read Requests: " << numKnownReads << std::endl;*/
 
   for (__attribute__((unused)) auto elem : internalBlockchain_) {
     __attribute__((unused)) BlockId blockId = elem.first;
@@ -227,9 +201,6 @@ void TestsBuilder::createAndInsertRandomConditionalWrite(int executionId) {
     while (readVersion < prevLastBlockId_) readVersion = lastBlockId_ - (rand() % CONFLICT_DISTANCE);
   }
 
-  //size_t numOfWrites = (rand() % (MAX_WRITES_IN_REQ - 1)) + 1;
-  //size_t numOfKeysInReadSet = (rand() % MAX_READ_SET_SIZE_IN_REQ);
-
   size_t numOfWrites = MAX_WRITES_IN_REQ - 1;
   size_t numOfKeysInReadSet = MAX_READ_SET_SIZE_IN_REQ;
 
@@ -239,16 +210,7 @@ void TestsBuilder::createAndInsertRandomConditionalWrite(int executionId) {
   request->readVersion = readVersion;
   request->numOfKeysInReadSet = numOfKeysInReadSet;
   request->numOfWrites = numOfWrites;
-  //SimpleKey *readKeysArray = request->readSetArray();
   SimpleKV *writesKVArray = request->keyValueArray();
-
-  /*for (size_t i = 0; i < numOfKeysInReadSet; i++) {
-    std::string key = "";
-    key = genRandomString(KV_LEN-1);
-    //memcpy(readKeysArray[i].key, &key, sizeof(key));
-    strcpy(readKeysArray[i].key, key.c_str());
-    //key.copy(readKeysArray[i].key, KV_LEN);
-  }*/
 
   std::set<std::string> usedKeys;
   for (size_t i = 0; i < numOfWrites; i++) {
@@ -261,15 +223,10 @@ void TestsBuilder::createAndInsertRandomConditionalWrite(int executionId) {
     std::string value = "";
     value = genRandomString(KV_LEN-1);
 
-    //writtenKeyValueMap.insert(key, value);
     eeKVMaps[executionId][key] = value;
 
-    //memcpy(writesKVArray[i].simpleKey.key, &key, sizeof(key));
-    //memcpy(writesKVArray[i].simpleValue.value, &value, sizeof(value));
     strcpy(writesKVArray[i].simpleKey.key, key.c_str());
     strcpy(writesKVArray[i].simpleValue.value, value.c_str());
-    //key.copy(writesKVArray[i].simpleKey.key, KV_LEN);
-    //value.copy(writesKVArray[i].simpleValue.value, KV_LEN);
   }
 
   // Add request to m_requests
@@ -306,7 +263,6 @@ void TestsBuilder::createAndInsertRandomRead() {
   } else {  // New blocks have been written to the DB during this run.
     while (readVersion <= prevLastBlockId_) readVersion = (rand() % (lastBlockId_ + 1));
   }
-  //size_t numberOfKeysToRead = (rand() % (MAX_READS_IN_REQ - 1)) + 1;
   size_t numberOfKeysToRead = MAX_READS_IN_REQ - 1;
   auto *request = SimpleReadRequest::alloc(numberOfKeysToRead);
   request->header.type = READ;
@@ -318,10 +274,7 @@ void TestsBuilder::createAndInsertRandomRead() {
   for (size_t i = 0; i < numberOfKeysToRead; i++) {
     std::string key = "";
     key = genRandomString(KV_LEN-1);
-    //std::cout << "Random Read Key" << key << endl;
-    //memcpy(requestKeys[i].key, &key, sizeof(key));
     strcpy(requestKeys[i].key, key.c_str());
-    //key.copy(requestKeys[i].key, KV_LEN);
   }
 
   // Add request to m_requests
@@ -379,9 +332,7 @@ void TestsBuilder::createAndInsertReadPreviouslyWrittenKey(int executionId) {
         std::cout<<"Random Keys being generated for Reading" << std::endl;
         key = genRandomString(KV_LEN-1);
     }
-    //memcpy(requestKeys[i].key, &key, sizeof(key));
     strcpy(requestKeys[i].key, key.c_str());
-    //key.copy(requestKeys[i].key, KV_LEN);
   }
 
   // Add request to m_requests
@@ -396,28 +347,11 @@ void TestsBuilder::createAndInsertReadPreviouslyWrittenKey(int executionId) {
   for (size_t i = 0; i < numberOfKeysToRead; i++) {
     memcpy(replyItems[i].simpleKey.key, requestKeys[i].key, KV_LEN);
     std::string key(requestKeys[i].key);
-    //std::cout<<"Previously Added Key is: " << requestKeys[i].key << std::endl;
-    //std::cout<<"Value for above previosuly Added Key is: " << writtenKeyValueMap.find(key)->second.c_str() << std::endl;
     if (executionId == 0) {
       strcpy(replyItems[i].simpleValue.value, eeKVMaps[executionId].find(key)->second.c_str());
     } else {
       strcpy(replyItems[i].simpleValue.value, eeKVMaps[executionId].find(key)->second.c_str());
     }
-    //std::cout<<"After writing, key: " << replyItems[i].simpleKey.key << std::endl;
-    //std::cout<<"After writing, value: " << replyItems[i].simpleValue.value << std::endl;
-    
-    /*SimpleKeyBlockIdPair simpleKIDPair(requestKeys[i], request->readVersion);
-    KeyBlockIdToValueMap::const_iterator it = allKeysToValueMap_.lower_bound(simpleKIDPair);
-    if (it != allKeysToValueMap_.end() && (request->readVersion >= it->first.blockId) &&
-        (memcmp(it->first.key.key, requestKeys[i].key, KV_LEN) == 0)) {
-          std::string key(requestKeys[i].key);
-      std::cout<<"Previously Added Key is: " << requestKeys[i].key << std::endl;
-      std::cout<<"Value for above previosuly Added Key is: " << writtenKeyValueMap.find(key)->second.c_str() << std::endl;
-      strcpy(replyItems[i].simpleValue.value, writtenKeyValueMap.find(key)->second.c_str());
-    } else {
-      // Fill value by zeroes for a non-found key.
-      memset(replyItems[i].simpleValue.value, 0, KV_LEN);
-    }*/
   }
   // Add reply to m_replies
   replies_.push_back((SimpleReply *)reply);
