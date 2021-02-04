@@ -1158,6 +1158,8 @@ std::string ReplicaImp::getReplicaState() const {
       toPair(getName(checkpointsLog->currentActiveWindow().second), checkpointsLog->currentActiveWindow().second));
   nested_data.insert(toPair(getName(clientsManager->numberOfRequiredReservedPages()),
                             clientsManager->numberOfRequiredReservedPages()));
+  nested_data.insert(toPair(getName(numInvalidClients), numInvalidClients));
+  nested_data.insert(toPair(getName(numValidNoOps), numValidNoOps));
   result.insert(toPair("Other ", concordUtils::kvContainerToJson(nested_data, [](const auto &arg) { return arg; })));
   oss << concordUtils::kContainerToJson(result);
   return oss.str();
@@ -3812,9 +3814,11 @@ void ReplicaImp::executeRequestsInPrePrepareMsg(concordUtils::SpanWrapper &paren
         const bool validClient = isValidClient(clientId);
         const bool validNoop = ((clientId == currentPrimary()) && (req.requestLength() == 0));
         if (validNoop) {
+          ++numValidNoOps;
           continue;
         }
         if (!validClient) {
+          ++numInvalidClients;
           LOG_WARN(GL, "The client is not valid. " << KVLOG(clientId));
           continue;
         }
