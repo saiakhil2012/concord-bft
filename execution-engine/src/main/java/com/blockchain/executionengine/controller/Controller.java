@@ -2,6 +2,7 @@ package com.blockchain.executionengine.controller;
 
 import com.blockchain.executionengine.command.Command;
 import com.blockchain.executionengine.store.KeyValue;
+import com.blockchain.executionengine.store.KeyObject;
 import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
@@ -24,18 +25,13 @@ import java.util.HashMap;
 @Slf4j
 @RestController
 class Controller {
-
-//    private final EmployeeRepository repository;
-//
-//    EmployeeController(EmployeeRepository repository) {
-//        this.repository = repository;
-//    }
-
     Gson g = new Gson();
     RestTemplate restTemplate = new RestTemplate();
-    String dbUrl = "http://localhost:9090/db";
+    String dbUrl = "http://172.17.0.1:9090/db";
 
     String seed = "TestSeedCanBeGeneratedAndStoredPerUser";
+
+    HashMap<String, String> keyToEncryptedKey = new HashMap<>();
 
 
     // Aggregate root
@@ -47,13 +43,14 @@ class Controller {
 
     @GetMapping("/ee/{key}")
     String getValue(@PathVariable String key) {
-        log.info("Get and now calling db");
+        log.debug("Get and now calling db");
         return restTemplate.getForObject(dbUrl + "/" + key, String.class);
     }
 
     @PostMapping("/ee/execute")
     String newKeyValue(@RequestBody String request) {
-        log.info("Post and now calling db");
+        log.debug("Post and now calling db");
+        log.debug("Request is " + request);
         try {
             Command command = new Command();
             JSONObject reqObject = new JSONObject(request);
@@ -67,8 +64,10 @@ class Controller {
                 }
             }
             if (command.getCommandType().equals("get")) {
-                log.info("Key is " + command.getKey());
-                return restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class);
+                log.debug("Key is " + command.getKey());
+                String response = restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class);
+                log.debug("Response is " + response);
+                return response;
             } else if (command.getCommandType().equals("add")) {
                 KeyValue keyValue = new KeyValue(command.getKey(), command.getValue());
                 String requestJson = g.toJson(keyValue);
@@ -95,7 +94,8 @@ class Controller {
 
     @PostMapping("/ee/secured/execute")
     String newSecuredKeyValue(@RequestBody String request) {
-        log.info("Secured Post and now calling db");
+        log.debug("Secured Post and now calling db");
+        log.debug("Request is " + request);
         try {
             StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
             encryptor.setPassword(seed);
@@ -105,19 +105,34 @@ class Controller {
             if (reqObject.has("command")) {
                 if (reqObject.has("key")) {
                     if (reqObject.has("value")) {
-                        command = new Command(reqObject.getString("command"), reqObject.getString("key"),
+                        command = new Command(reqObject.getString("command"), encryptor.encrypt(reqObject.getString("key")),
                                 encryptor.encrypt(reqObject.getString("value")));
                     } else {
-                        command = new Command(reqObject.getString("command"), reqObject.getString("key"), "");
+                        command = new Command(reqObject.getString("command"), (reqObject.getString("key")), "");
                     }
                 }
             }
             if (command.getCommandType().equals("get")) {
-                log.info("Key is " + command.getKey());
-                return encryptor.decrypt(restTemplate.getForObject(dbUrl + "/" + command.getKey(), String.class));
+                log.debug("Key is " + command.getKey());
+                String encryptedKey = keyToEncryptedKey.get(command.getKey());
+                log.debug("Key was encrypted as " + encryptedKey);
+                KeyObject key = new KeyObject(encryptedKey);
+                String requestJson = g.toJson(key);
+                log.debug("Request JSON to SKVBC is " + requestJson);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                HttpEntity<String> entity = new HttpEntity<String>(requestJson,headers);
+                String response = encryptor.decrypt(restTemplate.postForObject(dbUrl + "/key", entity, String.class));
+                log.debug("Response is " + response);
+                return response;
             } else if (command.getCommandType().equals("add")) {
+                log.debug("Key after encrypt is " + command.getKey());
+                // Storing Key --> Encrypted Key in the Map
+                keyToEncryptedKey.put(encryptor.decrypt(command.getKey()), command.getKey());
                 KeyValue keyValue = new KeyValue(command.getKey(), command.getValue());
                 String requestJson = g.toJson(keyValue);
+                log.debug("Request JSON to SKVBC is " + requestJson);
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
 

@@ -48,6 +48,7 @@ void BasicRandomTestsRunner::run() {
   ConcordAssert(requests.size() == expectedReplies.size());
 
   int ops = 0;
+  clock_t begin = clock();
   while (!requests.empty()) {
     sleep(ops);
     SimpleRequest *request = requests.front();
@@ -68,6 +69,9 @@ void BasicRandomTestsRunner::run() {
 
     if (isReplyCorrect(request->type, expectedReply, reply.data(), expectedReplySize, actualReplySize)) ops++;
   }
+  clock_t end = clock();
+  double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+  LOG_INFO(logger_, "\n***Elapsed Time (in seconds): " << elapsed_secs);
   sleep(1);
   LOG_INFO(logger_, "\n*** Test completed. " << ops << " messages have been handled.");
   client_.stop();

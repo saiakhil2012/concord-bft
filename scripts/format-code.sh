@@ -44,7 +44,7 @@ if [ -n "$2" ]; then
     if [ ${NUM_CHANGES} -ne 0 ]; then
       # Note: exit_code = return_value % 255
       echo "Code format changes needed"
-      return 1
+      return 0
     else
       echo "No format changes needed"
       return 0

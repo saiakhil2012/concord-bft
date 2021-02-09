@@ -42,11 +42,11 @@ namespace BasicRandomTests {
 TestsBuilder::TestsBuilder(logging::Logger &logger, IClient &client) : logger_(logger), client_(client) {
   prevLastBlockId_ = getInitialLastBlockId();
   lastBlockId_ = prevLastBlockId_;
-  LOG_INFO(logger, "TestsBuilder: initialBlockId_=" << prevLastBlockId_);
+  LOG_DEBUG(logger, "TestsBuilder: initialBlockId_=" << prevLastBlockId_);
 }
 
 TestsBuilder::~TestsBuilder() {
-  LOG_INFO(logger_, "TestsBuilder: The last DB block is " << lastBlockId_);
+  LOG_DEBUG(logger_, "TestsBuilder: The last DB block is " << lastBlockId_);
   for (auto elem : requests_) delete[] elem;
   for (auto elem : replies_) delete[] elem;
 }
@@ -72,7 +72,7 @@ BlockId TestsBuilder::getInitialLastBlockId() {
   ConcordAssert(res.isOK());
 
   auto *replyObj = (SimpleReply_GetLastBlock *)reply.data();
-  LOG_INFO(logger_, "Actual reply size = " << actualReplySize << ", expected reply size = " << expectedReplySize);
+  LOG_DEBUG(logger_, "Actual reply size = " << actualReplySize << ", expected reply size = " << expectedReplySize);
   ConcordAssert(actualReplySize == expectedReplySize);
   ConcordAssert(replyObj->header.type == GET_LAST_BLOCK);
   SimpleGetLastBlockRequest::free(request);
@@ -117,7 +117,7 @@ void TestsBuilder::retrieveExistingBlocksFromKVB() {
 }
 
 void TestsBuilder::createRandomTest(size_t numOfRequests, size_t seed) {
-  retrieveExistingBlocksFromKVB();
+  //retrieveExistingBlocksFromKVB();
   create(numOfRequests, seed);
   for (auto elem : internalBlockchain_) {
     free(elem.second);
@@ -125,17 +125,15 @@ void TestsBuilder::createRandomTest(size_t numOfRequests, size_t seed) {
 }
 
 void TestsBuilder::create(size_t numOfRequests, size_t seed) {
+
   srand(seed);
   for (size_t i = 0; i < numOfRequests; i++) {
-    int percent = rand() % 100 + 1;
-    if (percent <= 50)
-      createAndInsertRandomRead();
-    else if (percent <= 95)
-      createAndInsertRandomConditionalWrite();
-    else if (percent <= 100)
-      createAndInsertGetLastBlock();
-    else
-      ConcordAssert(0);
+    int eeId = rand() % 9;
+    if (i < numOfRequests/2) {
+      createAndInsertRandomConditionalWrite(eeId);
+    } else {
+      createAndInsertReadPreviouslyWrittenKey(eeId);
+    }
   }
 
   for (__attribute__((unused)) auto elem : internalBlockchain_) {
@@ -195,7 +193,7 @@ void TestsBuilder::addNewBlock(size_t numOfWrites, SimpleKV *writesKVArray) {
   internalBlockchain_[lastBlockId_] = newBlock;
 }
 
-void TestsBuilder::createAndInsertRandomConditionalWrite() {
+void TestsBuilder::createAndInsertRandomConditionalWrite(int executionId) {
   // Create request
   BlockId readVersion = lastBlockId_;
   if (lastBlockId_ > prevLastBlockId_ + CONFLICT_DISTANCE) {
@@ -203,43 +201,39 @@ void TestsBuilder::createAndInsertRandomConditionalWrite() {
     while (readVersion < prevLastBlockId_) readVersion = lastBlockId_ - (rand() % CONFLICT_DISTANCE);
   }
 
-  size_t numOfWrites = (rand() % (MAX_WRITES_IN_REQ - 1)) + 1;
-  size_t numOfKeysInReadSet = (rand() % MAX_READ_SET_SIZE_IN_REQ);
+  size_t numOfWrites = MAX_WRITES_IN_REQ - 1;
+  size_t numOfKeysInReadSet = MAX_READ_SET_SIZE_IN_REQ;
 
   auto *request = SimpleCondWriteRequest::alloc(numOfKeysInReadSet, numOfWrites);
   request->header.type = COND_WRITE;
-  request->header.executionEngineId = 0;
+  request->header.executionEngineId = executionId;
   request->readVersion = readVersion;
   request->numOfKeysInReadSet = numOfKeysInReadSet;
   request->numOfWrites = numOfWrites;
-  SimpleKey *readKeysArray = request->readSetArray();
   SimpleKV *writesKVArray = request->keyValueArray();
 
-  for (size_t i = 0; i < numOfKeysInReadSet; i++) {
-    size_t key = 0;
-    do {
-      key = rand() % NUMBER_OF_KEYS;
-    } while (key == concord::kvbc::IBlockMetadata::kBlockMetadataKey);
-    memcpy(readKeysArray[i].key, &key, sizeof(key));
-  }
-
-  std::set<size_t> usedKeys;
+  std::set<std::string> usedKeys;
   for (size_t i = 0; i < numOfWrites; i++) {
-    size_t key = 0;
-    do {  // Avoid duplications
-      key = rand() % NUMBER_OF_KEYS;
-    } while (usedKeys.count(key) > 0 || key == concord::kvbc::IBlockMetadata::kBlockMetadataKey);
+    std::string key = "";
+    do {
+      key = genRandomString(KV_LEN-1);
+    } while (usedKeys.count(key) > 0);
     usedKeys.insert(key);
 
-    size_t value = rand();
-    memcpy(writesKVArray[i].simpleKey.key, &key, sizeof(key));
-    memcpy(writesKVArray[i].simpleValue.value, &value, sizeof(value));
+    std::string value = "";
+    value = genRandomString(KV_LEN-1);
+
+    eeKVMaps[executionId][key] = value;
+
+    strcpy(writesKVArray[i].simpleKey.key, key.c_str());
+    strcpy(writesKVArray[i].simpleValue.value, value.c_str());
   }
 
   // Add request to m_requests
   requests_.push_back((SimpleRequest *)request);
 
-  bool foundConflict = lookForConflicts(readVersion, numOfKeysInReadSet, readKeysArray);
+  //bool foundConflict = lookForConflicts(readVersion, numOfKeysInReadSet, readKeysArray);
+  bool foundConflict = false;
 
   // Add expected reply to m_replies
   addExpectedWriteReply(foundConflict);
@@ -248,6 +242,17 @@ void TestsBuilder::createAndInsertRandomConditionalWrite() {
   if (!foundConflict) {
     addNewBlock(request->numOfWrites, writesKVArray);
   }
+  ++numWrites;
+}
+
+std::string TestsBuilder::genRandomString(int n) {
+  char options[26] = {'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
+  std::string randStr = "";
+  for (int i = 0; i < n; i++) {
+      randStr = randStr + options[rand() % 26];
+  }
+  //std::cout << randStr << endl;
+  return randStr;
 }
 
 void TestsBuilder::createAndInsertRandomRead() {
@@ -258,7 +263,7 @@ void TestsBuilder::createAndInsertRandomRead() {
   } else {  // New blocks have been written to the DB during this run.
     while (readVersion <= prevLastBlockId_) readVersion = (rand() % (lastBlockId_ + 1));
   }
-  size_t numberOfKeysToRead = (rand() % (MAX_READS_IN_REQ - 1)) + 1;
+  size_t numberOfKeysToRead = MAX_READS_IN_REQ - 1;
   auto *request = SimpleReadRequest::alloc(numberOfKeysToRead);
   request->header.type = READ;
   request->header.executionEngineId = 0;
@@ -267,11 +272,9 @@ void TestsBuilder::createAndInsertRandomRead() {
 
   SimpleKey *requestKeys = request->keys;
   for (size_t i = 0; i < numberOfKeysToRead; i++) {
-    size_t key = 0;
-    do {
-      key = rand() % NUMBER_OF_KEYS;
-    } while (key == concord::kvbc::IBlockMetadata::kBlockMetadataKey);
-    memcpy(requestKeys[i].key, &key, sizeof(key));
+    std::string key = "";
+    key = genRandomString(KV_LEN-1);
+    strcpy(requestKeys[i].key, key.c_str());
   }
 
   // Add request to m_requests
@@ -298,6 +301,61 @@ void TestsBuilder::createAndInsertRandomRead() {
   }
   // Add reply to m_replies
   replies_.push_back((SimpleReply *)reply);
+  ++numRandomReads;
+}
+
+// If no written keys, it falls back to reading a random generated key
+void TestsBuilder::createAndInsertReadPreviouslyWrittenKey(int executionId) {
+  // Create request
+  BlockId readVersion = 0;
+  if (prevLastBlockId_ == lastBlockId_) {
+    readVersion = lastBlockId_;
+  } else {  // New blocks have been written to the DB during this run.
+    while (readVersion <= prevLastBlockId_) readVersion = (rand() % (lastBlockId_ + 1));
+  }
+  //size_t numberOfKeysToRead = (rand() % (MAX_READS_IN_REQ - 1)) + 1;
+  size_t numberOfKeysToRead = MAX_READS_IN_REQ - 1;
+  auto *request = SimpleReadRequest::alloc(numberOfKeysToRead);
+  request->header.type = READ;
+  request->header.executionEngineId = executionId;
+  request->readVersion = readVersion;
+  request->numberOfKeysToRead = numberOfKeysToRead;
+
+  SimpleKey *requestKeys = request->keys;
+  for (size_t i = 0; i < numberOfKeysToRead; i++) {
+    std::string key = "";
+    if (eeKVMaps[executionId].size() > 0) {
+        auto it = eeKVMaps[executionId].begin();
+        std::advance(it, rand() % eeKVMaps[executionId].size());
+        key = it->first;
+    } else {
+        std::cout<<"Random Keys being generated for Reading" << std::endl;
+        key = genRandomString(KV_LEN-1);
+    }
+    strcpy(requestKeys[i].key, key.c_str());
+  }
+
+  // Add request to m_requests
+  requests_.push_back((SimpleRequest *)request);
+
+  // Compute expected reply
+  auto *reply = SimpleReply_Read::alloc(numberOfKeysToRead);
+  reply->header.type = READ;
+  reply->numOfItems = numberOfKeysToRead;
+
+  SimpleKV *replyItems = reply->items;
+  for (size_t i = 0; i < numberOfKeysToRead; i++) {
+    memcpy(replyItems[i].simpleKey.key, requestKeys[i].key, KV_LEN);
+    std::string key(requestKeys[i].key);
+    if (executionId == 0) {
+      strcpy(replyItems[i].simpleValue.value, eeKVMaps[executionId].find(key)->second.c_str());
+    } else {
+      strcpy(replyItems[i].simpleValue.value, eeKVMaps[executionId].find(key)->second.c_str());
+    }
+  }
+  // Add reply to m_replies
+  replies_.push_back((SimpleReply *)reply);
+  ++numKnownReads;
 }
 
 void TestsBuilder::createAndInsertGetLastBlock() {

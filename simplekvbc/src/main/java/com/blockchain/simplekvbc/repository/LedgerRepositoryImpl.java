@@ -38,7 +38,7 @@ public class LedgerRepositoryImpl implements LedgerRepository<String, String> {
 
     @Override
     public synchronized void save(String key, String value) {
-        log.info("save");
+        log.debug("save");
         try {
             db.put(key.getBytes(), value.getBytes());
         } catch (RocksDBException e) {
@@ -48,7 +48,7 @@ public class LedgerRepositoryImpl implements LedgerRepository<String, String> {
 
     @Override
     public String find(String key) {
-        log.info("find");
+        log.debug("find");
         String result = null;
         try {
             byte[] bytes = db.get(key.getBytes());
@@ -62,7 +62,7 @@ public class LedgerRepositoryImpl implements LedgerRepository<String, String> {
 
     @Override
     public void delete(String key) {
-        log.info("delete");
+        log.debug("delete");
         try {
             db.delete(key.getBytes());
         } catch (RocksDBException e) {
