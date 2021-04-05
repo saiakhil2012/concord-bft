@@ -1212,6 +1212,10 @@ void ReplicaImp::onInternalMsg(GetStatus &status) const {
     return status.output.set_value(stateTransfer->getStatus());
   }
 
+  if (status.key == "key-exchange") {
+    return status.output.set_value(KeyManager->getStatus());
+  }
+
   if (status.key == "pre-execution") {
     return status.output.set_value(replStatusHandlers_.preExecutionStatus(getAggregator()));
   }

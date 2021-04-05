@@ -262,6 +262,10 @@ void KeyManager::waitForFullCommunication() {
   LOG_INFO(KEY_EX_LOG, "Consensus engine available, " << avlble << " replicas are connected");
 }
 
+std::string KeyManager::getStatus() {
+  return "Key Manager Status"
+}
+
 /////////////KEYS VIEW////////////////////////////
 
 const std::string KeyManager::KeysViewData::getVersion() const { return "1"; }

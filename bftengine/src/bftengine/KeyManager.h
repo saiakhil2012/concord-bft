@@ -161,6 +161,8 @@ class KeyManager {
   // returns when num of connections is (clusterSize - 1) i.e. full communication.
   void waitForFullCommunication();
 
+  std::string getStatus();
+
   //////////////////////////////////////////////////
   // METRICS
   struct Metrics {
