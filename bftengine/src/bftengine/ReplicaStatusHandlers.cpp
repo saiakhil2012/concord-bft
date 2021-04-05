@@ -40,10 +40,12 @@ void ReplicaStatusHandlers::registerStatusHandlers() const {
 
   auto replica_handler = make_handler_callback("replica", "Internal state of the concord-bft replica");
   auto state_transfer_handler = make_handler_callback("state-transfer", "Status of blockchain state transfer");
+  auto key_exchange_handler = make_handler_callback("key-exchange", "Status of key-exchange");
   auto preexecution_handler = make_handler_callback("pre-execution", "Status of pre-execution");
 
   registrar.status.registerHandler(replica_handler);
   registrar.status.registerHandler(state_transfer_handler);
+  registrar.status.registerHandler(key_exchange_handler);
   registrar.status.registerHandler(preexecution_handler);
 }
 
