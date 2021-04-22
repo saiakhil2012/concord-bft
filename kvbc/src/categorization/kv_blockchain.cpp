@@ -15,6 +15,8 @@
 #include "bcstatetransfer/SimpleBCStateTransfer.hpp"
 #include "bftengine/ControlStateManager.hpp"
 #include "json_output.hpp"
+#include "diagnostics.h"
+#include "performance_handler.h"
 
 #include <stdexcept>
 
@@ -147,6 +149,7 @@ void KeyValueBlockchain::loadCategories() {
 // 3) inserts the updates KV to the DB updates set per column family
 // 4) add the category block data into the new block
 BlockId KeyValueBlockchain::addBlock(Updates&& updates) {
+  diagnostics::TimeRecorder scoped_timer(*histograms_.addBlock);
   // Use new client batch and column families
   auto write_batch = native_client_->getBatch();
   auto block_id = addBlock(std::move(updates.category_updates_), write_batch);
@@ -257,6 +260,7 @@ Category& KeyValueBlockchain::getCategoryRef(const std::string& cat_id) {
 std::optional<Value> KeyValueBlockchain::get(const std::string& category_id,
                                              const std::string& key,
                                              BlockId block_id) const {
+  diagnostics::TimeRecorder scoped_timer(*histograms_.get);
   const auto category = getCategoryPtr(category_id);
   if (!category) {
     return std::nullopt;
@@ -267,6 +271,7 @@ std::optional<Value> KeyValueBlockchain::get(const std::string& category_id,
 }
 
 std::optional<Value> KeyValueBlockchain::getLatest(const std::string& category_id, const std::string& key) const {
+  diagnostics::TimeRecorder scoped_timer(*histograms_.getLatest);
   const auto category = getCategoryPtr(category_id);
   if (!category) {
     return std::nullopt;
@@ -280,6 +285,7 @@ void KeyValueBlockchain::multiGet(const std::string& category_id,
                                   const std::vector<std::string>& keys,
                                   const std::vector<BlockId>& versions,
                                   std::vector<std::optional<Value>>& values) const {
+  diagnostics::TimeRecorder scoped_timer(*histograms_.multiGet);
   const auto category = getCategoryPtr(category_id);
   if (!category) {
     nullopts(values, keys.size());
@@ -292,6 +298,7 @@ void KeyValueBlockchain::multiGet(const std::string& category_id,
 void KeyValueBlockchain::multiGetLatest(const std::string& category_id,
                                         const std::vector<std::string>& keys,
                                         std::vector<std::optional<Value>>& values) const {
+  diagnostics::TimeRecorder scoped_timer(*histograms_.multiGetLatest);
   const auto category = getCategoryPtr(category_id);
   if (!category) {
     nullopts(values, keys.size());
@@ -351,6 +358,7 @@ std::map<std::string, std::vector<std::string>> KeyValueBlockchain::getBlockStal
 
 /////////////////////// Delete block ///////////////////////
 bool KeyValueBlockchain::deleteBlock(const BlockId& block_id) {
+  diagnostics::TimeRecorder scoped_timer(*histograms_.deleteBlock);
   // Deleting blocks that don't exist is not an error.
   if (block_id == 0 || block_id < block_chain_.getGenesisBlockId()) {
     // E.L log
@@ -435,6 +443,7 @@ void KeyValueBlockchain::deleteGenesisBlock() {
 // 3 - Perform the delete
 // 4 - Increment the genesis block id.
 void KeyValueBlockchain::deleteLastReachableBlock() {
+  diagnostics::TimeRecorder scoped_timer(*histograms_.deleteLastReachableBlock);
   const auto last_id = block_chain_.getLastReachableBlockId();
   if (last_id == detail::Blockchain::INVALID_BLOCK_ID) {
     throw std::logic_error{"Blockchain empty, cannot delete last reachable block"};
@@ -629,6 +638,7 @@ ImmutableOutput KeyValueBlockchain::handleCategoryUpdates(BlockId block_id,
 
 /////////////////////// state transfer blockchain ///////////////////////
 void KeyValueBlockchain::addRawBlock(const RawBlock& block, const BlockId& block_id) {
+  diagnostics::TimeRecorder scoped_timer(*histograms_.addRawBlock);
   const auto last_reachable_block = getLastReachableBlockId();
   if (block_id <= last_reachable_block) {
     const auto msg = "Cannot add an existing block ID " + std::to_string(block_id);
@@ -653,6 +663,7 @@ void KeyValueBlockchain::addRawBlock(const RawBlock& block, const BlockId& block
 }
 
 std::optional<RawBlock> KeyValueBlockchain::getRawBlock(const BlockId& block_id) const {
+  diagnostics::TimeRecorder scoped_timer(*histograms_.getRawBlock);
   const auto last_reachable_block = getLastReachableBlockId();
 
   // Try to take it from the ST chain
